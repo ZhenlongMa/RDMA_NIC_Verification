@@ -15,7 +15,7 @@
 //  AUTHOR          DATE          VERSION          REASON
 //  mazhenlong      2021-01-18    v1.0             create
 //  mazhenlong      2021-05-12    v1.1             add self-loop-back
-//  mazhenlong      2022-01-27    v2               add mlti-host
+//  mazhenlong      2022-01-27    v2               add multi-host
 //
 //----------------------------------------------------------------------------
 
