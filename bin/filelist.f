@@ -32,9 +32,9 @@
 //*******************************************************************
 ../sv/hca_defines.sv
 
-../hdl/hca_dut.v
+../vrf_hdl/hca_dut.v
 ../sv/hca_interface.sv
-../hdl/hca_tb_top.v
+../vrf_hdl/hca_tb_top.v
 
 ../sv/common/hca_pcie_item.sv
 ../sv/common/hca_check_mem_list.sv
