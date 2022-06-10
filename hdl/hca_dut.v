@@ -120,21 +120,37 @@ module hca_dut #(
     input                                        b_s_axis_cc_tready
 );
 
-    wire                                                w_a2b_valid;
-    wire                                                w_a2b_last ;
-    wire              [NIC_DATA_WIDTH - 1 : 0]          wv_a2b_data;
-    wire              [NIC_KEEP_WIDTH - 1 : 0]          wv_a2b_keep;
-    wire                                                w_a2b_ready;
-    wire                                                w_a2b_start;
-    wire              [LINK_LAYER_USER_WIDTH - 1 : 0]   wv_a2b_user;
+    wire                                                w_hpc_a2b_valid;
+    wire                                                w_hpc_a2b_last ;
+    wire              [NIC_DATA_WIDTH - 1 : 0]          wv_hpc_a2b_data;
+    wire              [NIC_KEEP_WIDTH - 1 : 0]          wv_hpc_a2b_keep;
+    wire                                                w_hpc_a2b_ready;
+    wire                                                w_hpc_a2b_start;
+    wire              [LINK_LAYER_USER_WIDTH - 1 : 0]   wv_hpc_a2b_user;
 
-    wire                                                w_b2a_valid;
-    wire                                                w_b2a_last ;
-    wire              [NIC_DATA_WIDTH - 1 : 0]          wv_b2a_data;
-    wire              [NIC_KEEP_WIDTH - 1 : 0]          wv_b2a_keep;
-    wire                                                w_b2a_ready;
-    wire                                                w_b2a_start;
-    wire              [LINK_LAYER_USER_WIDTH - 1 : 0]   wv_b2a_user;
+    wire                                                w_hpc_b2a_valid;
+    wire                                                w_hpc_b2a_last ;
+    wire              [NIC_DATA_WIDTH - 1 : 0]          wv_hpc_b2a_data;
+    wire              [NIC_KEEP_WIDTH - 1 : 0]          wv_hpc_b2a_keep;
+    wire                                                w_hpc_b2a_ready;
+    wire                                                w_hpc_b2a_start;
+    wire              [LINK_LAYER_USER_WIDTH - 1 : 0]   wv_hpc_b2a_user;
+
+    wire                                                w_eth_a2b_valid;
+    wire                                                w_eth_a2b_last ;
+    wire              [NIC_DATA_WIDTH - 1 : 0]          wv_eth_a2b_data;
+    wire              [NIC_KEEP_WIDTH - 1 : 0]          wv_eth_a2b_keep;
+    wire                                                w_eth_a2b_ready;
+    wire                                                w_eth_a2b_start;
+    wire              [LINK_LAYER_USER_WIDTH - 1 : 0]   wv_eth_a2b_user;
+
+    wire                                                w_eth_b2a_valid;
+    wire                                                w_eth_b2a_last ;
+    wire              [NIC_DATA_WIDTH - 1 : 0]          wv_eth_b2a_data;
+    wire              [NIC_KEEP_WIDTH - 1 : 0]          wv_eth_b2a_keep;
+    wire                                                w_eth_b2a_ready;
+    wire                                                w_eth_b2a_start;
+    wire              [LINK_LAYER_USER_WIDTH - 1 : 0]   wv_eth_b2a_user;
 
     NIC_Top #(
         .C_DATA_WIDTH           (C_DATA_WIDTH           ), // RX/TX interface data width
@@ -198,37 +214,37 @@ module hca_dut #(
         .cfg_interrupt_msix_fail    (0),
         .cfg_interrupt_msi_function_number  (),
 
-        .o_hpc_tx_valid             (w_a2b_valid),
-        .o_hpc_tx_last              (w_a2b_last ),
-        .ov_hpc_tx_data             (wv_a2b_data),
-        .ov_hpc_tx_keep             (wv_a2b_keep),
-        .i_hpc_tx_ready             (w_a2b_ready),
-        .o_hpc_tx_start             (w_a2b_start),
-        .ov_hpc_tx_user             (wv_a2b_user),
+        .o_hpc_tx_valid             (w_hpc_a2b_valid),
+        .o_hpc_tx_last              (w_hpc_a2b_last ),
+        .ov_hpc_tx_data             (wv_hpc_a2b_data),
+        .ov_hpc_tx_keep             (wv_hpc_a2b_keep),
+        .i_hpc_tx_ready             (w_hpc_a2b_ready),
+        .o_hpc_tx_start             (w_hpc_a2b_start),
+        .ov_hpc_tx_user             (wv_hpc_a2b_user),
 
-        .i_hpc_rx_valid             (w_b2a_valid),
-        .i_hpc_rx_last              (w_b2a_last ),
-        .iv_hpc_rx_data             (wv_b2a_data),
-        .iv_hpc_rx_keep             (wv_b2a_keep),
-        .o_hpc_rx_ready             (w_b2a_ready),	
-        .i_hpc_rx_start             (w_b2a_start),
-        .iv_hpc_rx_user             (wv_b2a_user), 
+        .i_hpc_rx_valid             (w_hpc_b2a_valid),
+        .i_hpc_rx_last              (w_hpc_b2a_last ),
+        .iv_hpc_rx_data             (wv_hpc_b2a_data),
+        .iv_hpc_rx_keep             (wv_hpc_b2a_keep),
+        .o_hpc_rx_ready             (w_hpc_b2a_ready),	
+        .i_hpc_rx_start             (w_hpc_b2a_start),
+        .iv_hpc_rx_user             (wv_hpc_b2a_user), 
 
-        .o_eth_tx_valid             (),
-        .o_eth_tx_last              (),
-        .ov_eth_tx_data             (),
-        .ov_eth_tx_keep             (),
-        .i_eth_tx_ready             (0),
-        .o_eth_tx_start             (), 
-        .ov_eth_tx_user             (), 
+        .o_eth_tx_valid             (w_eth_a2b_valid),
+        .o_eth_tx_last              (w_eth_a2b_last ),
+        .ov_eth_tx_data             (wv_eth_a2b_data),
+        .ov_eth_tx_keep             (wv_eth_a2b_keep),
+        .i_eth_tx_ready             (w_eth_a2b_ready),
+        .o_eth_tx_start             (w_eth_a2b_start), 
+        .ov_eth_tx_user             (wv_eth_a2b_user), 
 
-        .i_eth_rx_valid             (0), 
-        .i_eth_rx_last              (0),
-        .iv_eth_rx_data             (0),
-        .iv_eth_rx_keep             (0),
-        .o_eth_rx_ready             (),	
-        .i_eth_rx_start             (0),
-        .iv_eth_rx_user             (0), 
+        .i_eth_rx_valid             (w_eth_b2a_valid), 
+        .i_eth_rx_last              (w_eth_b2a_last ),
+        .iv_eth_rx_data             (wv_eth_b2a_data),
+        .iv_eth_rx_keep             (wv_eth_b2a_keep),
+        .o_eth_rx_ready             (w_eth_b2a_ready),	
+        .i_eth_rx_start             (w_eth_b2a_start),
+        .iv_eth_rx_user             (wv_eth_b2a_user), 
 
         .ov_init_rw_data            (),
         .iv_rw_data                 (0),
@@ -299,37 +315,37 @@ module hca_dut #(
         .cfg_interrupt_msix_fail    (0),
         .cfg_interrupt_msi_function_number  (),
 
-        .o_hpc_tx_valid             (w_b2a_valid),
-        .o_hpc_tx_last              (w_b2a_last ),
-        .ov_hpc_tx_data             (wv_b2a_data),
-        .ov_hpc_tx_keep             (wv_b2a_keep),
-        .i_hpc_tx_ready             (w_b2a_ready),
-        .o_hpc_tx_start             (w_b2a_start),
-        .ov_hpc_tx_user             (wv_b2a_user),
+        .o_hpc_tx_valid             (w_hpc_b2a_valid),
+        .o_hpc_tx_last              (w_hpc_b2a_last ),
+        .ov_hpc_tx_data             (wv_hpc_b2a_data),
+        .ov_hpc_tx_keep             (wv_hpc_b2a_keep),
+        .i_hpc_tx_ready             (w_hpc_b2a_ready),
+        .o_hpc_tx_start             (w_hpc_b2a_start),
+        .ov_hpc_tx_user             (wv_hpc_b2a_user),
 
-        .i_hpc_rx_valid             (w_a2b_valid),
-        .i_hpc_rx_last              (w_a2b_last ),
-        .iv_hpc_rx_data             (wv_a2b_data),
-        .iv_hpc_rx_keep             (wv_a2b_keep),
-        .o_hpc_rx_ready             (w_a2b_ready),	
-        .i_hpc_rx_start             (w_a2b_start),
-        .iv_hpc_rx_user             (wv_a2b_user), 
+        .i_hpc_rx_valid             (w_hpc_a2b_valid),
+        .i_hpc_rx_last              (w_hpc_a2b_last ),
+        .iv_hpc_rx_data             (wv_hpc_a2b_data),
+        .iv_hpc_rx_keep             (wv_hpc_a2b_keep),
+        .o_hpc_rx_ready             (w_hpc_a2b_ready),	
+        .i_hpc_rx_start             (w_hpc_a2b_start),
+        .iv_hpc_rx_user             (wv_hpc_a2b_user), 
 
-        .o_eth_tx_valid             (),
-        .o_eth_tx_last              (),
-        .ov_eth_tx_data             (),
-        .ov_eth_tx_keep             (),
-        .i_eth_tx_ready             (0),
-        .o_eth_tx_start             (), 
-        .ov_eth_tx_user             (), 
+        .o_eth_tx_valid             (w_eth_b2a_valid),
+        .o_eth_tx_last              (w_eth_b2a_last ),
+        .ov_eth_tx_data             (wv_eth_b2a_data),
+        .ov_eth_tx_keep             (wv_eth_b2a_keep),
+        .i_eth_tx_ready             (w_eth_b2a_ready),
+        .o_eth_tx_start             (w_eth_b2a_start), 
+        .ov_eth_tx_user             (wv_eth_b2a_user), 
 
-        .i_eth_rx_valid             (0), 
-        .i_eth_rx_last              (0),
-        .iv_eth_rx_data             (0),
-        .iv_eth_rx_keep             (0),
-        .o_eth_rx_ready             (),	
-        .i_eth_rx_start             (0),
-        .iv_eth_rx_user             (0), 
+        .i_eth_rx_valid             (w_eth_a2b_valid), 
+        .i_eth_rx_last              (w_eth_a2b_last ),
+        .iv_eth_rx_data             (wv_eth_a2b_data),
+        .iv_eth_rx_keep             (wv_eth_a2b_keep),
+        .o_eth_rx_ready             (w_eth_a2b_ready),	
+        .i_eth_rx_start             (w_eth_a2b_start),
+        .iv_eth_rx_user             (wv_eth_a2b_user), 
 
         .ov_init_rw_data            (),
         .iv_rw_data                 (0),

@@ -197,8 +197,6 @@ module hca_tb_top #(
     initial begin
         uvm_config_db#(virtual hca_interface)::set(uvm_root::get(), "*.env.sub_env[0]*", "virtual_if", hca_if_a);
         uvm_config_db#(virtual hca_interface)::set(uvm_root::get(), "*.env.sub_env[1]*", "virtual_if", hca_if_b);
-        // uvm_config_db#(virtual hca_interface)::set(uvm_root::get(), "*", "virtual_if_0", hca_if_a);
-        // uvm_config_db#(virtual hca_interface)::set(uvm_root::get(), "*", "virtual_if_1", hca_if_b);
     end
 
     initial begin

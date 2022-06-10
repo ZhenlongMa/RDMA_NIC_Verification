@@ -39,6 +39,8 @@ class hca_scoreboard extends uvm_scoreboard;
     hca_fifo #(.width(256)) src_data_fifo;
     hca_fifo #(.width(256)) dst_data_fifo;
     mailbox glb_stop_mbx;
+    string start_time;
+    string end_time;
     `uvm_component_utils_begin(hca_scoreboard)
     `uvm_component_utils_end
 
@@ -49,6 +51,7 @@ class hca_scoreboard extends uvm_scoreboard;
     //------------------------------------------------------------------------------
     function new(string name, uvm_component parent);
         super.new(name, parent);
+        start_time = get_sys_time();
         if (!$value$plusargs("HCA_HOST_NUM=%d", host_num)) begin
             `uvm_fatal("PARAM_ERROR", "host num not get!");
         end
@@ -159,6 +162,7 @@ class hca_scoreboard extends uvm_scoreboard;
             `uvm_info("GLB_STOP_INFO", $sformatf("batch finished! db_id: %h", db_id), UVM_LOW);
         end
         `uvm_info("GLB_STOP_INFO", $sformatf("verification finished!"), UVM_LOW);
+        // end_time = get_sys_time();
         phase.drop_objection(this);
     endtask: run_phase
 
@@ -244,5 +248,16 @@ class hca_scoreboard extends uvm_scoreboard;
             `uvm_fatal("CQE_ERR", $sformatf("CQE error! host_id: %h, QP number: %h, syndrome: %h", host_id, cqe.my_qpn, cqe.syndrome));
         end
     endfunction: check_cqe
+
+    function string get_sys_time();
+        string sys_time;
+        int fp;
+        $system("date +%Y-%m-%d' '%H:%M:%S > sys_time");
+        fp = $fopen("sys_time", "r");
+        $fgets(sys_time, fp);
+        $fclose(fp);
+        $system("rm sys_time");
+        return sys_time;
+    endfunction: get_sys_time
 endclass: hca_scoreboard
 `endif 

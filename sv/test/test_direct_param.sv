@@ -83,11 +83,7 @@ class test_direct_param extends uvm_test;
     virtual function void build_phase(uvm_phase phase);
         super.build_phase(phase);
 
-        // $system("date +%Y-%m-%d' '%H:%M:%S > begin_time");
-        // fp = $fopen("begin_time", "r");
-        // $fgets(begin_time, fp);
-        // $fclose(fp);
-        // $system("rm begin_time");
+        begin_time = get_sys_time();
 
         if (!$value$plusargs("HCA_CASE_NAME=%s", seq_name)) begin
             `uvm_fatal("PARAM_ERROR", "seq name not get!");
@@ -278,21 +274,21 @@ class test_direct_param extends uvm_test;
     //------------------------------------------------------------------------------
     function void report_phase(uvm_phase phase);
         super.report_phase(phase);
+        end_time = get_sys_time();
+        `uvm_info("TIME_INFO", $sformatf("begin time: %s", begin_time), UVM_LOW);
+        `uvm_info("TIME_INFO", $sformatf("end time: %s", end_time), UVM_LOW);
     endfunction: report_phase
 
-    // function void pre_abort();
-    //     $system("date +%Y-%m-%d' '%H:%M:%S > end_time");
-    //     fp = $fopen("end_time", "r");
-    //     $fgets(end_time, fp);
-    //     $fclose(fp);
-    //     $system("rm end_time");
-    //     `uvm_info("TIME_INFO", $sformatf("begin time: %s", begin_time), UVM_LOW);
-    //     `uvm_info("TIME_INFO", $sformatf("end time: %s", end_time), UVM_LOW);
-    //     super.pre_abort;
-    // endfunction: pre_abort
-
-    //------------------------------------------------------------------------------
-
+    function string get_sys_time();
+        string sys_time;
+        int fp;
+        $system("date +%Y-%m-%d' '%H:%M:%S > sys_time");
+        fp = $fopen("sys_time", "r");
+        $fgets(sys_time, fp);
+        $fclose(fp);
+        $system("rm sys_time");
+        return sys_time;
+    endfunction: get_sys_time
 
     //------------------------------------------------------------------------------
     // task name     : gen_item
