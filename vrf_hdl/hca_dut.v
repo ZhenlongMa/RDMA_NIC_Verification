@@ -327,6 +327,18 @@ module hca_dut #(
         .cfg_interrupt_msix_fail    (0),
         .cfg_interrupt_msi_function_number  (),
 
+        .p2p_upper_valid            (0),
+        .p2p_upper_last             (0),
+        .p2p_upper_data             (0),
+        .p2p_upper_head             (0),
+        .p2p_upper_ready            (),
+
+        .p2p_down_valid             (),
+        .p2p_down_last              (),
+        .p2p_down_data              (),
+        .p2p_down_head              (),
+        .p2p_down_ready             (0),
+
         .o_hpc_tx_valid             (w_hpc_b2a_valid),
         .o_hpc_tx_last              (w_hpc_b2a_last ),
         .ov_hpc_tx_data             (wv_hpc_b2a_data),
