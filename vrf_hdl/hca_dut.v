@@ -158,18 +158,25 @@ module hca_dut #(
 
         // defined for pcie interface
         .DMA_HEAD_WIDTH         (DMA_HEAD_WIDTH         ),
+        .UPPER_HEAD_WIDTH       (64                     ),
+        .DOWN_HEAD_WIDTH        (64                     ),
         .AXIL_DATA_WIDTH        (32                     ),
         .AXIL_ADDR_WIDTH        (24                     ),
-        .ETHER_BASE             (24'h0                  ),
-        .ETHER_LEN              (24'h1000               ),
+
+        .HCR_BASE               (20'h00000              ),
+        .ETH_BASE               (20'h1000               ),
+        .ETH_LEN                (20'h1000               ),
+        .P2P_BASE               (20'h2000               ),
+        .P2P_LEN                (20'h80000              ),
+        
         .DB_BASE                (12'h0                  ),
-        .HCR_BASE               (20'h80000              ),
+
         .AXIL_STRB_WIDTH        (4                      ),
         .NIC_DATA_WIDTH         (NIC_DATA_WIDTH         ),
         .NIC_KEEP_WIDTH         (NIC_KEEP_WIDTH         ),
         .LINK_LAYER_USER_WIDTH  (LINK_LAYER_USER_WIDTH  ),
-        .RW_REG_NUM             (1024                   ),
-        .RO_REG_NUM             (4096                   )
+        .NIC_TOP_RW_REG_NUM             (1024                   ),
+        .NIC_TOP_RO_REG_NUM             (4096                   )
     ) NIC_a (
         .rst                        (a_user_reset),
         .pcie_clk                   (a_pcie_clk),
@@ -266,23 +273,30 @@ module hca_dut #(
     );
 
     NIC_Top #(
-        .C_DATA_WIDTH           (C_DATA_WIDTH           ),
+        .C_DATA_WIDTH           (C_DATA_WIDTH           ), // RX/TX interface data width
         .KEEP_WIDTH             (KEEP_WIDTH             ),
 
         // defined for pcie interface
         .DMA_HEAD_WIDTH         (DMA_HEAD_WIDTH         ),
+        .UPPER_HEAD_WIDTH       (64                     ),
+        .DOWN_HEAD_WIDTH        (64                     ),
         .AXIL_DATA_WIDTH        (32                     ),
         .AXIL_ADDR_WIDTH        (24                     ),
-        .ETHER_BASE             (24'h0                  ),
-        .ETHER_LEN              (24'h1000               ),
+
+        .HCR_BASE               (20'h00000              ),
+        .ETH_BASE               (20'h1000               ),
+        .ETH_LEN                (20'h1000               ),
+        .P2P_BASE               (20'h2000               ),
+        .P2P_LEN                (20'h80000              ),
+        
         .DB_BASE                (12'h0                  ),
-        .HCR_BASE               (20'h80000              ),
+
         .AXIL_STRB_WIDTH        (4                      ),
         .NIC_DATA_WIDTH         (NIC_DATA_WIDTH         ),
         .NIC_KEEP_WIDTH         (NIC_KEEP_WIDTH         ),
         .LINK_LAYER_USER_WIDTH  (LINK_LAYER_USER_WIDTH  ),
-        .RW_REG_NUM             (1024                   ),
-        .RO_REG_NUM             (4096                   )
+        .NIC_TOP_RW_REG_NUM             (1024                   ),
+        .NIC_TOP_RO_REG_NUM             (4096                   )
     ) NIC_b (
         .rst                        (b_user_reset),
         .pcie_clk                   (b_pcie_clk),

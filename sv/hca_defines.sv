@@ -65,13 +65,12 @@
 ////////////////////////////////////////////////////////////
 // address
 ////////////////////////////////////////////////////////////
-`define HCR_BAR_ADDR                    64'h0000_0000_0008_0000
-`define DB_BAR_ADDR                     64'h0000_0000_0010_0000
+`define HCR_BAR_ADDR                    64'h0000_0000_0000_0000
+`define DB_BAR_ADDR                     64'h0000_0000_0000_0000
 
 `define INBOX_ADDR                      `ADDR_WIDTH'h0000_0000_1234_1000
 `define OUTBOX_ADDR                     `ADDR_WIDTH'h0000_0000_1234_2000
 `define DATA_RECV_BUFF_GAP              `ADDR_WIDTH'h0000_0001_0000_0000
-// `define SQ_RQ_GAP                       `ADDR_WIDTH'h0000_0000_0008_0000
 `define SQ_RQ_GAP                       `ADDR_WIDTH'h0000_0000_0080_0000
 
 `define CQ_BASE_VADDR                   `ADDR_WIDTH'h0000_0000_0010_0000
