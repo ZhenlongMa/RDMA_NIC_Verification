@@ -4,6 +4,7 @@
 OUTPUT = hca_test
 TEST_NAME = test_direct_param
 CASE_NAME = test_direct
+VPD_NAME = wave.vpd
 
 # commands
 com:
@@ -19,7 +20,7 @@ com:
 	-f filelist.f -o ${OUTPUT}
 
 debug_dve:
-	./${OUTPUT} -gui=dve -uvmDebug +UVM_VERDI_TRACE=HIER +UVM_VERBOSITY=UVM_LOW +UVM_TESTNAME=${TEST_NAME} \
+	./${OUTPUT} -gui=dve -uvmDebug +vpdfile+${VPDNAME} +UVM_VERDI_TRACE=HIER +UVM_VERBOSITY=UVM_LOW +UVM_TESTNAME=${TEST_NAME} \
 				+HCA_CASE_NAME=${CASE_NAME} \
 				+HCA_HOST_NUM=2 \
 				+HCA_PROC_NUM=2 \
@@ -38,4 +39,4 @@ debug_dve:
 				-l run.log
 				
 clean:
-	rm -rf ${OUTPUT} stack.info* session.inter.vpd.tcl csrc DVEfiles *.fsdb novas* *.daidir ucli.key vc_hdrs.h verdiLog flex* inter*
+	rm -rf ${OUTPUT} *.vpd stack.info* session.inter.vpd.tcl csrc DVEfiles *.fsdb novas* *.daidir ucli.key vc_hdrs.h verdiLog flex* inter*

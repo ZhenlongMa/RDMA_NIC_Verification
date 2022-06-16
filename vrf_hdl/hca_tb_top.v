@@ -302,11 +302,11 @@ module hca_tb_top #(
         hca_if_b.rdma_clk      <= ~hca_if_b.rdma_clk;
     end
 
-    initial begin
-        $fsdbDumpvars(0, hca_tb_top);
-        $fsdbDumpon();
-        $fsdbDumpMDA();
-    end
+    // initial begin
+    //     $fsdbDumpvars(0, hca_tb_top);
+    //     $fsdbDumpon();
+    //     $fsdbDumpMDA();
+    // end
 
     initial begin
         $vcdpluson();
