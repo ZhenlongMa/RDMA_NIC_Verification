@@ -310,6 +310,7 @@ module hca_tb_top #(
 
     initial begin
         $vcdpluson();
+        $vcdplusmemon();
     end
 
     initial begin

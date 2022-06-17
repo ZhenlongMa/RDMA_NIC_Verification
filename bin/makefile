@@ -12,6 +12,7 @@ com:
 	-debug_access+all -kdb -lca \
 	-picarchive -full64 -timescale=1ns/100ps \
 	+acc +vpi \
+	+memcbk \
 	+warn=none \
 	+define+UVM_OBJECT_MUST_HAVE_CONSTRUCTOR+UVM_USE_CALLBACKS_OBJECTION_FOR_TEST_DONE \
 	+define+UVM_REG_DATA_WIDTH=256 \
