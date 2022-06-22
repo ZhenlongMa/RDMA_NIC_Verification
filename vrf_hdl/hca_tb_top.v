@@ -311,6 +311,7 @@ module hca_tb_top #(
     initial begin
         $vcdpluson();
         $vcdplusmemon();
+        $vcdplusautoflushon();
     end
 
     initial begin

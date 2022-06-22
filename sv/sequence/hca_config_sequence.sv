@@ -91,7 +91,6 @@ class hca_config_sequence extends uvm_sequence #(hca_pcie_item);
             cfg_item = cfg_item_que.pop_front();
             `uvm_info("NOTICE", "config item got in config sequence", UVM_LOW);
             start_item(cfg_item);
-            // if (cfg_item.item_type == )
             if (cfg_item.item_type == HCR) begin
                 `uvm_info("ITEM_INFO", "HCR item received in config sequence", UVM_LOW);
                 print_begin_info(cfg_item);
@@ -99,7 +98,7 @@ class hca_config_sequence extends uvm_sequence #(hca_pcie_item);
                 set_cq_payload(cfg_item);
                 finish_item(cfg_item);
 
-                // synchronize with master driver and DUT
+                // synchronize with master driver and DUT, wati until clear
                 cmd_done.get(cmd_result);
             end
             else if (cfg_item.item_type == GLOBAL_STOP) begin

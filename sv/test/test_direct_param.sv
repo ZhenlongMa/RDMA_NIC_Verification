@@ -85,18 +85,18 @@ class test_direct_param extends uvm_test;
 
         begin_time = get_sys_time();
 
-        if (!$value$plusargs("HCA_CASE_NAME=%s", seq_name)) begin
+        if (!$value$plusargs("CASE_NAME=%s", seq_name)) begin
             `uvm_fatal("PARAM_ERROR", "seq name not get!");
         end
 
-        if (!$value$plusargs("HCA_HOST_NUM=%d", host_num)) begin
+        if (!$value$plusargs("HOST_NUM=%d", host_num)) begin
             `uvm_fatal("PARAM_ERROR", "host num not get!");
         end
         if (host_num > `MAX_HOST_NUM) begin
             `uvm_fatal("PARAM_ERROR", "host num maximum exceeded!");
         end
 
-        if (!$value$plusargs("HCA_PROC_NUM=%d", proc_num)) begin
+        if (!$value$plusargs("PROC_NUM=%d", proc_num)) begin
             `uvm_fatal("PARAM_ERROR", "process num not get!");
         end
         if (proc_num > `MAX_PROC_NUM) begin
@@ -106,7 +106,7 @@ class test_direct_param extends uvm_test;
             `uvm_fatal("PARAM_ERROR", "process num should be larger than 1!");
         end
 
-        if (!$value$plusargs("HCA_DB_NUM=%d", db_num)) begin
+        if (!$value$plusargs("DB_NUM=%d", db_num)) begin
             `uvm_fatal("PARAM_ERROR", "doorbell num not get!");
         end
         if (db_num > `MAX_DB_NUM) begin
@@ -120,11 +120,11 @@ class test_direct_param extends uvm_test;
         //     `uvm_fatal("PARAM_ERROR", "page num maximum exceeded!");
         // end
 
-        if (!$value$plusargs("HCA_DATA_CNT=%d", raw_data_cnt)) begin
+        if (!$value$plusargs("DATA_CNT=%d", raw_data_cnt)) begin
             `uvm_fatal("PARAM_ERROR", "sg_data_count not get!");
         end
 
-        if (!$value$plusargs("HCA_DATA_UNIT=%s", data_unit)) begin
+        if (!$value$plusargs("DATA_UNIT=%s", data_unit)) begin
             `uvm_fatal("PARAM_ERROR", "data_unit not get!");
         end
         if (data_unit == "B") begin
@@ -143,7 +143,7 @@ class test_direct_param extends uvm_test;
             `uvm_fatal("PARAM_ERROR", "Illegal data_unit!");
         end
 
-        if (!$value$plusargs("HCA_SG_NUM=%d", sg_num)) begin
+        if (!$value$plusargs("SG_NUM=%d", sg_num)) begin
             `uvm_fatal("PARAM_ERROR", "sg num not get!");
         end
         if (sg_num > max_sg_num) begin
@@ -255,7 +255,8 @@ class test_direct_param extends uvm_test;
         phase.raise_objection(this);
         fork
             begin
-                gen_item_seq();
+                wqe_data_count = sg_num * sg_data_cnt;
+                test_direct();
                 `uvm_info("NOTICE", "generate item finished!", UVM_LOW)
             end
             begin
@@ -289,31 +290,6 @@ class test_direct_param extends uvm_test;
         $system("rm sys_time");
         return sys_time;
     endfunction: get_sys_time
-
-    //------------------------------------------------------------------------------
-    // task name     : gen_item
-    // function      : generate initial item.
-    // invoked       : by build_phase
-    //------------------------------------------------------------------------------
-    task gen_item_seq();
-        case (seq_name)
-            "test_direct": begin
-                wqe_data_count = sg_num * sg_data_cnt;
-                // if (db_num * wqe_num * sg_num * page_num > 1000000) begin
-                //     `uvm_fatal("ILLEGAL_PARAM", "db_num * wqe_num * sg_num * page_num exceeds ONE MILLION!");
-                // end
-                test_direct();
-            end
-            "128B": begin
-                wqe_data_count = 128;
-                test_direct();
-            end
-            default: begin
-                `uvm_fatal("SEQ_NAME_ERROR", "sequence name not found!");
-            end
-        endcase
-        // direct_test();
-    endtask: gen_item_seq
 
     //------------------------------------------------------------------------------
     // task name     : test_direct
