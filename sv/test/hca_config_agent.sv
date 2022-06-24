@@ -259,6 +259,7 @@ class hca_config_agent extends uvm_object;
         // cq_ctx_list[0].push_back(cq_ctx);
     endtask: sw2hw_cq
 
+    // phys addr must be 4K aligned!!!!
     function addr write_mtt(int host_id, addr phys_addr, int page_num, int temp = 0);
         hca_pcie_item write_mtt_item;
         addr phys_addr_pcie;
@@ -282,17 +283,17 @@ class hca_config_agent extends uvm_object;
         // end
         // else if (temp == 2) begin
         //     temp_index = 20000;
-        //     `uvm_info("MTT_MOTICE", "write mtt, temp index is 20000!", UVM_LOW);
+        //     `uvm_info("MTT_NOTICE", "write mtt, temp index is 20000!", UVM_LOW);
         // end
 
         
         // send write mtt pcie item to sequence
         write_mtt_item.mtt_item.start_index = temp_index;
         phys_addr_pcie = phys_addr;
-        `uvm_info("MTT_MOTICE", $sformatf("write_mtt start index: %h", temp_index), UVM_LOW);
+        `uvm_info("MTT_NOTICE", $sformatf("write_mtt start index: %h", temp_index), UVM_LOW);
         for (int i = 0; i < page_num; i++) begin
             write_mtt_item.mtt_item.phys_addr.push_back(phys_addr_pcie);
-            `uvm_info("MTT_MOTICE", $sformatf("write_mtt phys addr: %h", phys_addr_pcie), UVM_LOW);
+            `uvm_info("MTT_NOTICE", $sformatf("write_mtt phys addr: %h", phys_addr_pcie), UVM_LOW);
             phys_addr_pcie += `PAGE_SIZE;
         end
         vseq.cfg_mbx[host_id].try_put(write_mtt_item);

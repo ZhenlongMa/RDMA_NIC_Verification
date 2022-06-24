@@ -85,9 +85,9 @@ class test_direct_param extends uvm_test;
 
         begin_time = get_sys_time();
 
-        if (!$value$plusargs("CASE_NAME=%s", seq_name)) begin
-            `uvm_fatal("PARAM_ERROR", "seq name not get!");
-        end
+        // if (!$value$plusargs("CASE_NAME=%s", seq_name)) begin
+        //     `uvm_fatal("PARAM_ERROR", "seq name not get!");
+        // end
 
         if (!$value$plusargs("HOST_NUM=%d", host_num)) begin
             `uvm_fatal("PARAM_ERROR", "host num not get!");
@@ -786,7 +786,7 @@ class test_direct_param extends uvm_test;
         if (vseq.comm_mbx[host_id].try_put(doorbell_item) == 0) begin
             `uvm_fatal("MAILBOX_PUT_ERROR", "put comm item fail!")
         end
-        // `uvm_info("NOTICE", $sformatf("send doorbell finished! QP number: %h", db.qp_num), UVM_LOW);
+        `uvm_info("NOTICE", $sformatf("send doorbell finished! QP number: %h", db.qp_num), UVM_LOW);
     endtask: send_db
 
     function hca_queue_pair create_qp(
@@ -914,8 +914,8 @@ class test_direct_param extends uvm_test;
     function mpt create_mr(
         int host_id,
         input bit [10:0] proc_id,
-        input bit [63:0] size,  //page align
-        input addr start_vaddr, 
+        input bit [63:0] size, 
+        input addr start_vaddr,
         input bit [31:0] pd, 
         input bit [31:0] page_size, 
         input bool is_zbva,
@@ -945,15 +945,21 @@ class test_direct_param extends uvm_test;
         end
 
         // set amount of mtt entries
-        if (size % page_size == 0) begin
-            mtt_num = size / page_size;
+        // if (size % page_size == 0) begin
+        //     mtt_num = size / page_size;
+        // end
+        // else begin
+        //     mtt_num = size / page_size + 1;
+        // end
+        if ((size + start_vaddr[11:0]) % page_size == 0) begin
+            mtt_num = (size + start_vaddr[11:0]) / page_size;
         end
         else begin
-            mtt_num = size / page_size + 1;
+            mtt_num = (size + start_vaddr[11:0]) / page_size + 1;
         end
 
         // set amount of pages for mtt in ICM space
-        if (mtt_num + 1 % 512 == 0) begin
+        if ((mtt_num + 1) % 512 == 0) begin
             mtt_page_num = mtt_num / 512;
         end
         else begin
@@ -972,17 +978,17 @@ class test_direct_param extends uvm_test;
             // mtt seg is the header index of the whole MR mtt entries
             if (mtt_num_sent == 0) begin
                 if (mtt_num <= 255) begin
-                    mtt_seg = cfg_agt.write_mtt(host_id, {5'b0, proc_id, start_vaddr[47:0]}, mtt_num);
+                    mtt_seg = cfg_agt.write_mtt(host_id, {5'b0, proc_id, start_vaddr[47:12], 12'b0}, mtt_num);
                 end
                 else begin
-                    mtt_seg = cfg_agt.write_mtt(host_id, {5'b0, proc_id, start_vaddr[47:0]}, 255);
+                    mtt_seg = cfg_agt.write_mtt(host_id, {5'b0, proc_id, start_vaddr[47:12], 12'b0}, 255);
                 end
             end
             if (mtt_num_sent + 255 <= mtt_num) begin
-                cfg_agt.write_mtt(host_id, {5'b0, proc_id, start_vaddr[47:0]}, 255);
+                cfg_agt.write_mtt(host_id, {5'b0, proc_id, start_vaddr[47:12], 12'b0}, 255);
             end
             else begin
-                cfg_agt.write_mtt(host_id, {5'b0, proc_id, start_vaddr[47:0]}, mtt_num - mtt_num_sent);
+                cfg_agt.write_mtt(host_id, {5'b0, proc_id, start_vaddr[47:12], 12'b0}, mtt_num - mtt_num_sent);
             end
         end
 
@@ -994,15 +1000,16 @@ class test_direct_param extends uvm_test;
             new_mpt.start = 0;
         end
         else begin
-            new_mpt.start = start_vaddr;
+            new_mpt.start = {start_vaddr[63:12], 12'b0};
         end
         new_mpt.pd = pd;
         new_mpt.mtt_seg = mtt_seg;
         new_mpt.key = mem_info.mem_region[host_id].size();
 
         cfg_agt.sw2hw_mpt(host_id, new_mpt);
-        `uvm_info("CREATE_MR_NOTEICE", $sformatf("create mr success! host_id: %h, size: %h, key: %h, vaddr: %h, pd: %h, page size: %h", 
-            host_id, size, new_mpt.key, start_vaddr, pd, page_size), UVM_LOW);
+        `uvm_info("CREATE_MR_NOTICE", 
+            $sformatf("create mr success! host_id: %h, size: %h, key: %h, input start vaddr: %h, MR start vaddr: %h, pd: %h, page size: %h", 
+                host_id, size, new_mpt.key, start_vaddr, new_mpt.start, pd, page_size), UVM_LOW);
         return new_mpt;
     endfunction: create_mr
 
@@ -1022,11 +1029,11 @@ class test_direct_param extends uvm_test;
                 write_data[j] = $urandom();
             end
             data_fifo.push(write_data);
-            `uvm_info("DATA_NOTICE", $sformatf("write data: %h", write_data), UVM_LOW);
+            `uvm_info("DATA_NOTICE", $sformatf("write data: %h, host id: %h", write_data, host_id), UVM_LOW);
             write_data = 0;
         end
         env.mem[host_id].write_block(phys_addr, data_fifo, data_cnt);
-        `uvm_info("TEST_NOTICE", $sformatf("send data start physical addr: %h, data count: %0d", phys_addr, data_cnt), UVM_LOW);
+        `uvm_info("TEST_NOTICE", $sformatf("send data start physical addr: %h, data count: %0d, host id: %h", phys_addr, data_cnt, host_id), UVM_LOW);
         data_fifo.clean();
     endfunction: write_test_data
 endclass: test_direct_param
