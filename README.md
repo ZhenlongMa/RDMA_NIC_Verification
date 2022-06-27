@@ -1,1 +1,1 @@
-This is a function verification platform based on UVM.
+This is a function verification platform based on UVM for RDMA NIC. Hardware DUT code is not published.

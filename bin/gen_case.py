@@ -31,7 +31,7 @@ for ud_qp_num in [0, 2]:
                             if (uc_qp_num == 0):
                                 if (write_wqe_num != 0):
                                     continue
-                        for sg_num in range(1, 4):
+                        for sg_num in range(1, 7):
                             for data_count in [10, 4, 8, 16, 32, 64]:
                                 if (data_count == 10):
                                     data_unit = "B"
@@ -149,7 +149,6 @@ for ud_qp_num in [2, 10]:
                                 file.write("-l mix_service_type_log/case" + str(flag).zfill(flaglen) + ".log\n")
                                 flag = flag + 1
 
-                                
 file = open("./case/mix_operation_type.sh", "w")
 file.write("rm -f mix_operation_type_log/*\n")
 file.write("rm -f ./mix_operation_type_wave/*\n")

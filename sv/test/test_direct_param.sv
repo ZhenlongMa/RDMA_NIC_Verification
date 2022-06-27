@@ -774,11 +774,23 @@ class test_direct_param extends uvm_test;
         db.f0 = 0;
         db.opcode = op_code;
         db.qp_num = qp.ctx.local_qpn;
-        if (op_code == `VERBS_SEND) begin
-            db.size0 = sg_num + 1;
+        
+        // set size0
+        if (qp.ctx.flags[23:16] == `HGHCA_QP_ST_UD) begin
+            if (op_code == `VERBS_SEND) begin
+                db.size0 = sg_num + 4;
+            end
+            else begin
+                `uvm_fatal("OP TYPE ERROR", $sformatf("op type error! qpn: %h, host id: %h, op code: %h", qp.ctx.local_qpn, host_id, op_code));
+            end
         end
         else begin
-            db.size0 = sg_num + 2;
+            if (op_code == `VERBS_SEND) begin
+                db.size0 = sg_num + 1;
+            end
+            else begin
+                db.size0 = sg_num + 2;
+            end
         end
         db.proc_id = proc_id;
         doorbell_item.item_type = DOORBELL;
@@ -821,18 +833,21 @@ class test_direct_param extends uvm_test;
 
         // set QP context
         qpc.opt_param_mask = $urandom();
+        qpc.flags[31:28] = 4'b0011;
+        qpc.flags[27:24] = 4'b0000;
+        qpc.flags[15:0] = 16'b0;
         case (serv_typ)
             RC: begin
-                qpc.flags = {16'h3000, 16'b0000};
+                qpc.flags[23:16] = 8'b0000_0000;
             end
             UC: begin
-                qpc.flags = {16'h3000, 16'h0001};
+                qpc.flags[23:16] = 8'h0000_0001;
             end
             RD: begin
-                qpc.flags = {16'h3000, 16'h0002};
+                qpc.flags[23:16] = 8'b0000_0010;
             end
             UD: begin
-                qpc.flags = {16'h3000, 16'h0003};
+                qpc.flags[23:16] = 8'h0000_0011;
             end
             default: begin
                 `uvm_fatal("CREATE_QP_ERR", "invalid service type!");

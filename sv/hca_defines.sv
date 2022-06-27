@@ -542,7 +542,6 @@ typedef struct {
 //-----------------{MPT flags}begin------------------//
 `define     MPT_FLAG_SW_OWNS
 
-
 //--------------{Query adapter}begin--------------//
 `define BOARD_ID 64'h01234567_89abcdef
 //--------------{Query adapter}end--------------//
