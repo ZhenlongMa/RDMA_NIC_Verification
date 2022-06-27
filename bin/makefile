@@ -8,15 +8,14 @@ VPD_NAME = wave.vpd
 
 # commands
 com:
-	vcs -sverilog -debug_all -ntb_opts uvm \
-	-debug_access+all -kdb -lca \
+	vcs -sverilog -ntb_opts uvm \
+	-debug_access+pp -lca \
 	-picarchive -full64 -timescale=1ns/100ps \
 	+acc +vpi \
 	+memcbk \
 	+warn=none \
 	+define+UVM_OBJECT_MUST_HAVE_CONSTRUCTOR+UVM_USE_CALLBACKS_OBJECTION_FOR_TEST_DONE \
 	+define+UVM_REG_DATA_WIDTH=256 \
-	+define+UVM_VERDI_COMPWAVE \
 	-l compile.log \
 	-f filelist.f -o ${OUTPUT}
 
