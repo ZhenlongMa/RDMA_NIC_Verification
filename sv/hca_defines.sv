@@ -44,10 +44,10 @@
 // This field sets the maximum TLP payload size. 
 // As a Receiver, the logic must handle TLPs as large as the set value. 
 // As a Transmitter, the logic must not generate TLPs exceeding the set value.
-`define MAX_PAYLOAD                     3'b101
+`define MAX_PAYLOAD                     3'b001
 // This field sets the maximum Read Request size for the logic as a Requester. 
 // The logic must not generate Read Requests with size exceeding the set value.
-`define MAX_READ_REQ                    3'b101
+`define MAX_READ_REQ                    3'b001
 `define MODIFY_QP_DW_CNT                41
 `define RC_DESC_DW_SIZE                 3
 `define LOG_NUM_WIDTH                   8
@@ -121,11 +121,13 @@
 `define READ_GO_GAP                     30
 `define CFG_COMM_GAP                    2000
 `define CFG_GAP                         300  // time gap between master driver sends two item to DUT
-`define CQE2SCB_GAP                     2000
+`define CQE2SCB_GAP                     2000 // time gap between slave monitor receives a CQE
+                                             // and sends it to scoreboard
 `define VALID_GAP                       64
 `define READY_GAP                       64
 `define PCIE_CLK_PERIOD                 10  // nanosecond
 `define RDMA_CLK_PERIOD                 10  // nanosecond
+`define BREAKTIME                       30000
 
 ////////////////////////////////////////////////////////////
 // code

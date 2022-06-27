@@ -52,13 +52,13 @@ class hca_scoreboard extends uvm_scoreboard;
     function new(string name, uvm_component parent);
         super.new(name, parent);
         start_time = get_sys_time();
-        if (!$value$plusargs("HCA_HOST_NUM=%d", host_num)) begin
+        if (!$value$plusargs("HOST_NUM=%d", host_num)) begin
             `uvm_fatal("PARAM_ERROR", "host num not get!");
         end
         if (host_num > `MAX_HOST_NUM) begin
             `uvm_fatal("PARAM_ERROR", "host num maximum exceeded!");
         end
-        if (!$value$plusargs("HCA_DB_NUM=%d", db_num)) begin
+        if (!$value$plusargs("DB_NUM=%d", db_num)) begin
             `uvm_fatal("PARAM_ERROR", "doorbell num not get!");
         end
         if (db_num > `MAX_DB_NUM) begin
