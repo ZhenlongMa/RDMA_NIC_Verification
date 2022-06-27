@@ -377,7 +377,6 @@ class hca_master_driver extends uvm_driver #(hca_pcie_item);
 
             // recieve response
             begin
-                // `uvm_info("NOTICE", {"MEM_RD response receive begin ... ", get_full_name()}, UVM_LOW);
                 v_if.s_axis_cc_tready = 1'b1;
                 // judge valid data
                 // WARNING: possibly get wrong response!
@@ -389,7 +388,6 @@ class hca_master_driver extends uvm_driver #(hca_pcie_item);
                 end
                 v_if.s_axis_cc_tready = 1'b0;
                 go = v_if.s_axis_cc_tdata[119];
-                // `uvm_info("CONFIG_INFO", $sformatf("v_if.s_axis_cc_tdata[23]: %b, go: %b",v_if.s_axis_cc_tdata[119], go), UVM_LOW);
                 status = v_if.s_axis_cc_tdata[127:120];
             end
         join

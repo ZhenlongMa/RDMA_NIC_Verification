@@ -66,9 +66,9 @@ class hca_config_sequence extends uvm_sequence #(hca_pcie_item);
     //------------------------------------------------------------------------------
     virtual task pre_body();
         // get case name
-        if (!$value$plusargs("HCA_CASE_NAME=%s", seq_name)) begin
-            `uvm_warning("hca_config_sequence", "HCA_CASE_NAME not get!")
-        end
+        // if (!$value$plusargs("HCA_CASE_NAME=%s", seq_name)) begin
+        //     `uvm_warning("hca_config_sequence", "HCA_CASE_NAME not get!")
+        // end
         // `uvm_info("PARAM_INFO", $sformatf("uvm_config_db get waiting! full name: %s.", get_full_name()), UVM_LOW);
         if(!uvm_config_db#(mailbox)::get(null, get_full_name(), "mbx_cmd_done", cmd_done)) begin
             `uvm_fatal("NO_MBX", $sformatf("mailbox not get in config_sequence! full name: %s, m_sequencer: %s.", get_full_name(), m_sequencer.get_full_name()));

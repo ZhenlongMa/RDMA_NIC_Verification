@@ -61,9 +61,9 @@ class hca_comm_sequence extends uvm_sequence #(hca_pcie_item);
         bit [`DATA_WIDTH-1 : 0] temp_data;
         bit                     cmd_result;
         // get case name
-        if (!$value$plusargs("HCA_CASE_NAME=%s", seq_name)) begin
-            `uvm_warning("hca_comm_sequence", "HCA_CASE_NAME not get!")
-        end
+        // if (!$value$plusargs("HCA_CASE_NAME=%s", seq_name)) begin
+        //     `uvm_warning("hca_comm_sequence", "HCA_CASE_NAME not get!")
+        // end
         while (comm_item_que.size != 0) begin
             comm_item = comm_item_que.pop_front();
             start_item(comm_item);

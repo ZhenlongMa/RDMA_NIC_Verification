@@ -654,6 +654,7 @@ class hca_queue_pair extends uvm_object;
         if (queue == 0) begin
             desc_byte_len[ctx.sq_entry_sz_log] = 1'b1;
             sq_tail = sq_tail + desc_byte_len;
+            `uvm_info("QP_NOTICE", $sformatf("consume SQ WQE, qpn: %h, sq_tail: %h, sq_header: %h", ctx.local_qpn, sq_tail, sq_header), UVM_LOW);
             if (sq_tail > sq_header) begin
                 `uvm_fatal("QUE_ERR", $sformatf("sq_tail exceeds sq_header! qpn: %h, sq_tail: %h, sq_header: %h", ctx.local_qpn, sq_tail, sq_header));
             end
@@ -661,6 +662,7 @@ class hca_queue_pair extends uvm_object;
         else begin
             desc_byte_len[ctx.rq_entry_sz_log] = 1'b1;
             rq_tail = rq_tail + desc_byte_len;
+            `uvm_info("QP_NOTICE", $sformatf("consume RQ WQE, qpn: %h, rq_tail: %h, rq_header: %h", ctx.local_qpn, rq_tail, rq_header), UVM_LOW);
             if (rq_tail > rq_header) begin
                 `uvm_fatal("QUE_ERR", $sformatf("rq_tail exceeds rq_header! qpn: %h, rq_tail: %h, rq_header: %h", ctx.local_qpn, rq_tail, rq_header));
             end
