@@ -786,7 +786,7 @@ class test_direct_param extends uvm_test;
         if (vseq.comm_mbx[host_id].try_put(doorbell_item) == 0) begin
             `uvm_fatal("MAILBOX_PUT_ERROR", "put comm item fail!")
         end
-        `uvm_info("NOTICE", $sformatf("send doorbell finished! QP number: %h", db.qp_num), UVM_LOW);
+        `uvm_info("NOTICE", $sformatf("send doorbell finished! host id: %h, QP number: %h", host_id, db.qp_num), UVM_LOW);
     endtask: send_db
 
     function hca_queue_pair create_qp(
