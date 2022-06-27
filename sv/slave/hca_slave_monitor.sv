@@ -83,6 +83,7 @@ class hca_slave_monitor extends uvm_monitor;
     task run_phase(uvm_phase phase);
         int beat_num;
         int received_dw_num;
+        int heartbeat = 0;
         bit [`DATA_WIDTH-1: 0] temp_data;
         phase.raise_objection(this);
         super.run_phase(phase);
@@ -243,6 +244,26 @@ class hca_slave_monitor extends uvm_monitor;
                             // port2scb.write(item_to_scb);
                         end
                     join_none
+                end
+            end
+
+            // detect block
+            begin
+                heartbeat = 0;
+                while (1) begin
+                    @ (posedge vif.pcie_clk);
+                    if (vif.global_stop == 1) begin
+                        break;
+                    end
+                    if (vif.s_axis_rq_tvalid == 1) begin
+                        heartbeat = 0;
+                    end
+                    else begin
+                        heartbeat++;
+                        if (heartbeat > `BREAKTIME) begin
+                            `uvm_fatal("AREYOUDEAD?", "Too much time no rq_tvalid!");
+                        end
+                    end
                 end
             end
         join
