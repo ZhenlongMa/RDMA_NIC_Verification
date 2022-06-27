@@ -158,13 +158,13 @@ class hca_slave_sequence extends uvm_sequence #(hca_pcie_item);
                     `uvm_info("NOTICE", $sformatf("read data content: %h", temp_data), UVM_HIGH);
                     sent_item.data_payload.push_back(temp_data);
                 end
-                if (received_item.rq_addr[47:38] == 10'b1) begin // read request to QP
-                    hca_queue_pair qp;
-                    bit [32:0] qpn;
-                    qpn = {18'b0, received_item.rq_addr[37:24]};
-                    qp = q_list.get_qp(host_id, qpn);
-                    qp.consume_wqe(received_item.rq_addr[23]);
-                end
+                // if (received_item.rq_addr[47:38] == 10'b1) begin // read request to QP
+                //     hca_queue_pair qp;
+                //     bit [32:0] qpn;
+                //     qpn = {18'b0, received_item.rq_addr[37:24]};
+                //     qp = q_list.get_qp(host_id, qpn);
+                //     qp.consume_wqe(received_item.rq_addr[23]);
+                // end
                 finish_item(sent_item);
             end
             else if (received_item.rq_req_type == MEM_WR) begin
