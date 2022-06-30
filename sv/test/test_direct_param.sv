@@ -457,17 +457,19 @@ class test_direct_param extends uvm_test;
                                     qp = q_list.qp_list[a_host_id][j];
                                     if (send_wqe_num != 0) begin
                                         opcode = `VERBS_SEND;
+                                        send_db(a_host_id, proc_id, qp, opcode);
                                     end
-                                    else if (write_wqe_num != 0) begin
+                                    else if (write_wqe_num != 0 && qp.ctx.flags[23:16] != `HGHCA_QP_ST_UD) begin
                                         opcode = `VERBS_RDMA_WRITE;
+                                        send_db(a_host_id, proc_id, qp, opcode);
                                     end
-                                    else if (read_wqe_num != 0) begin
+                                    else if (read_wqe_num != 0 && qp.ctx.flags[23:16] == `HGHCA_QP_ST_RC) begin
                                         opcode = `VERBS_RDMA_READ;
+                                        send_db(a_host_id, proc_id, qp, opcode);
                                     end
                                     else begin
-                                        `uvm_fatal("DB_ERR", "no send");
+                                        `uvm_info("DB_INFO", $sformatf("useless QP! qpn: %h", qp.ctx.local_qpn), UVM_LOW);
                                     end
-                                    send_db(a_host_id, proc_id, qp, opcode);
                                 end
                             join_none
                         end
@@ -608,7 +610,7 @@ class test_direct_param extends uvm_test;
                 addr dst_paddr = `PA_DATA(proc_id, qp.ctx.remote_qpn) + `DATA_RECV_BUFF_GAP + send_wqe_num * wqe_data_count + recv_wqe_num * wqe_data_count;
                 addr dst_vaddr = `VA(dst_paddr);
 
-                if (qp.ctx.flags[15:0] == `HGHCA_QP_ST_UD) begin
+                if (qp.ctx.flags[23:16] == `HGHCA_QP_ST_UD) begin
                     break;
                 end
                 // create data mpt and recv mpt
@@ -655,7 +657,7 @@ class test_direct_param extends uvm_test;
                                  write_wqe_num * wqe_data_count;
                 addr dst_vaddr = `VA(dst_paddr);
 
-                if (qp.ctx.flags[15:0] == `HGHCA_QP_ST_UD || qp.ctx.flags[15:0] == `HGHCA_QP_ST_UC) begin
+                if (qp.ctx.flags[23:16] == `HGHCA_QP_ST_UD || qp.ctx.flags[23:16] == `HGHCA_QP_ST_UC) begin
                     break;
                 end
 
@@ -857,16 +859,16 @@ class test_direct_param extends uvm_test;
         qpc.flags[15:0] = 16'b0;
         case (serv_typ)
             RC: begin
-                qpc.flags[23:16] = 8'b0000_0000;
+                qpc.flags[23:16] = 8'h00;
             end
             UC: begin
-                qpc.flags[23:16] = 8'h0000_0001;
+                qpc.flags[23:16] = 8'h01;
             end
             RD: begin
-                qpc.flags[23:16] = 8'b0000_0010;
+                qpc.flags[23:16] = 8'h02;
             end
             UD: begin
-                qpc.flags[23:16] = 8'h0000_0011;
+                qpc.flags[23:16] = 8'h03;
             end
             default: begin
                 `uvm_fatal("CREATE_QP_ERR", "invalid service type!");

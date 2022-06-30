@@ -111,7 +111,7 @@ class hca_slave_driver extends uvm_driver #(hca_pcie_item);
                 
                 // set tlast
                 if (beat_num == 0) begin // first beat
-                    if (item.rc_byte_count > 20) begin
+                    if (item.rc_dword_count > 5) begin
                         v_if.m_axis_rc_tlast = 0;
                     end
                     else begin
@@ -141,7 +141,7 @@ class hca_slave_driver extends uvm_driver #(hca_pcie_item);
                     v_if.m_axis_rc_tkeep = 8'b1111_1111;
                 end
                 else begin // is the last beat
-                    if (item.rc_byte_count == 20) begin // fully fill the last beat(also is the first beat)
+                    if (item.rc_dword_count == 5) begin // fully fill the last beat(also is the first beat)
                         v_if.m_axis_rc_tkeep = 8'b1111_1111;
                     end
                     else if ((beat_num != 0) && (sent_dw_num + 8 == item.rc_dword_count)) begin // fully fill the last beat(not the first beat)
@@ -222,8 +222,88 @@ class hca_slave_driver extends uvm_driver #(hca_pcie_item);
 
                 // remember to check data amount
 
-                // set tuser
-                v_if.m_axis_rc_tuser[31:0] = 32'hffff_ffff; // byte enable
+                // set start byte enable
+                // v_if.m_axis_rc_tuser[31:0] = 32'hffff_ffff; // byte enable
+                // if (beat_num == 0) begin
+                //     v_if.m_axis_rc_tuser[15:0] = {item.rc_first_be, 12'hfff};
+                // end
+                
+                // // set end byte enable
+                // if (item.rc_last_be != 0) begin
+                //     if (v_if.m_axis_rc_tlast == 1) begin
+                //         int i = 7;
+                //         while (v_if.m_axis_rc_tlast[i] == 0) begin
+                //             i--;
+                //         end
+                //         v_if.m_axis_rc_tuser[i * 4 + 3 -: 4] = item.rc_last_be;
+                //     end
+                //     else begin
+                //         if (beat_num == 0) begin
+                //             v_if.m_axis_rc_tuser[31:16] = 16'hffff;
+                //         end
+                //         else begin
+                //             v_if.m_axis_rc_tuser[31:0] = 32'hffff_ffff;
+                //         end
+                //     end
+                // end
+                // else begin
+                //     v_if.m_axis_rc_tuser[31:16] = 0;
+                // end
+                
+                // set byte enable
+                // only ONE DW
+                if (item.rc_last_be == 0) begin
+                    // check correctness
+                    if (item.rc_byte_count > 4 || beat_num != 0) begin
+                        `uvm_fatal("BYTE_CNT_ERROR", $sformatf("rc_byte_count does not fit 1! rc_byte_count: %h, beat_num: %0d", item.rc_byte_count, beat_num));
+                    end
+                    // set start byte enable
+                    v_if.m_axis_rc_tuser[31:0] = {16'h0000, item.rc_first_be, 12'hfff};
+                end
+                // multiple DW, only one beat
+                else if (beat_num == 0 && v_if.m_axis_rc_tlast == 1) begin
+                    int i;
+                    // check correctness
+                    if (item.rc_byte_count > 20 || beat_num != 0 || item.rc_byte_count <= 4) begin
+                        `uvm_fatal("BYTE_CNT_ERROR", $sformatf("rc_byte_count does not fit 2! item.rc_byte_count: %h, beat_num: %0d", item.rc_byte_count, beat_num));
+                    end
+                    v_if.m_axis_rc_tuser[31:0] = 32'hffff_ffff;
+                    // set start byte enable
+                    v_if.m_axis_rc_tuser[15:0] = {item.rc_first_be, 12'hfff};
+                    // set end byte enable
+                    i = 7;
+                    while (v_if.m_axis_rc_tkeep[i] == 0) begin
+                        v_if.m_axis_rc_tuser[i * 4 + 3 -: 4] = 4'h0;
+                        i--;
+                    end
+                    v_if.m_axis_rc_tuser[i * 4 + 3 -: 4] = item.rc_last_be;
+                    if (i <= 4) begin
+                        `uvm_fatal("I_ERROR", $sformatf("i error! i: %0d", i));
+                    end
+                end
+                // multiple beats
+                else begin
+                    // the first beat
+                    if (beat_num == 0) begin
+                        v_if.m_axis_rc_tuser[31:0] = {16'hffff, item.rc_first_be, 12'hfff};
+                    end
+                    // the last beat
+                    else if (v_if.m_axis_rc_tlast == 1) begin
+                        int i;
+                        i = 7;
+                        v_if.m_axis_rc_tuser[31:0] = 32'hffff_ffff;
+                        while (v_if.m_axis_rc_tkeep[i] == 0) begin
+                            v_if.m_axis_rc_tuser[i * 4 + 3 -: 4] = 4'h0;
+                            i--;
+                        end
+                        v_if.m_axis_rc_tuser[i * 4 + 3 -: 4] = item.rc_last_be;
+                    end
+                    // middle beat
+                    else begin
+                        v_if.m_axis_rc_tuser[31:0] = 32'hffff_ffff;
+                    end
+                end
+
                 if (beat_num == 0) begin // is_sof_0
                     v_if.m_axis_rc_tuser[32] = 1;
                 end

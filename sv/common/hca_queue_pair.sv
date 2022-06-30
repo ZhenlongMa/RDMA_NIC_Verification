@@ -221,7 +221,7 @@ class hca_queue_pair extends uvm_object;
             end
 
             // set ud seg
-            if (qp.ctx.flags[15:0] == `HGHCA_QP_ST_UD) begin
+            if (qp.ctx.flags[23:16] == `HGHCA_QP_ST_UD) begin
                 temp_wqe.ud_seg.port = 32'h0000_1234;
                 temp_wqe.ud_seg.smac = 48'h0102_0304_0506;
                 temp_wqe.ud_seg.dmac = 48'h0708_090a_0b0c;
@@ -243,8 +243,8 @@ class hca_queue_pair extends uvm_object;
                 data_seg_unit.byte_count = sg_data_cnt;
                 data_seg_unit.lkey = local_mpt.key;
                 data_seg_unit.addr = local_mpt.start + local_addr_offset;
-                `uvm_info("WQE_INFO", $sformatf("wqe_id: %h, data_seg: byte count: %h, lkey: %h, addr: %h, op: %h, qpn: %h, host_id: %h", 
-                    i, data_seg_unit.byte_count, data_seg_unit.lkey, data_seg_unit.addr, op_type, ctx.local_qpn, host_id), UVM_LOW
+                `uvm_info("WQE_INFO", $sformatf("wqe_id: %h, data_seg: byte count: %h, lkey: %h, addr: %h, op: %h, qpn: %h, serv_typ: %h, host_id: %h", 
+                    i, data_seg_unit.byte_count, data_seg_unit.lkey, data_seg_unit.addr, op_type, ctx.local_qpn, ctx.flags[23:16], host_id), UVM_LOW
                 );
                 temp_wqe.data_seg.push_back(data_seg_unit);
             end
@@ -296,7 +296,7 @@ class hca_queue_pair extends uvm_object;
                     host_id, 
                     remote_host_id, 
                     proc_id, 
-                    qp.proc_id, 
+                    remote_qp.proc_id, 
                     temp_wqe, 
                     op_type, 
                     local_mpt_que_check, 
@@ -407,7 +407,7 @@ class hca_queue_pair extends uvm_object;
                 check_unit.src_host = remote_host_id;
                 check_unit.dst_host = host_id;
                 check_unit.length = temp_data_seg.byte_count;
-                check_unit.src_addr = `PA(remote_proc_id, recv_src_mpt.start + recv_src_addr_offset);
+                check_unit.src_addr = `PA(remote_proc_id, recv_src_mpt.start) + recv_src_addr_offset;
                 check_unit.dst_addr = `PA(proc_id, temp_data_seg.addr);
                 `uvm_info("MEM_CHECK_NOTICE", $sformatf("send memory check unit, src_addr: %h, dst_addr: %h, operation type: %0d", 
                                                  check_unit.src_addr, check_unit.dst_addr, op_type), UVM_LOW);
@@ -494,7 +494,7 @@ class hca_queue_pair extends uvm_object;
             mem.write_block(base_paddr + wqe_offset, data_fifo, 32 + sg_num * 16);
         end
         else if (op_type == SEND) begin
-            if (qp.ctx.flags[15:0] != `HGHCA_QP_ST_UD) begin // RC/UC
+            if (qp.ctx.flags[23:16] != `HGHCA_QP_ST_UD) begin // RC/UC
                 raw_data = 0;
                 data_fifo.clean();
                 raw_data[127:0] = {
@@ -529,7 +529,7 @@ class hca_queue_pair extends uvm_object;
                 end
                 mem.write_block(base_paddr + wqe_offset, data_fifo, 16 + sg_num * 16);
             end
-            else if (qp.ctx.flags[15:0] == `HGHCA_QP_ST_UD) begin
+            else if (qp.ctx.flags[23:16] == `HGHCA_QP_ST_UD) begin
                 raw_data = 0;
                 data_fifo.clean();
                 raw_data[127:0] = {
@@ -583,7 +583,7 @@ class hca_queue_pair extends uvm_object;
             end
         end
         else if (op_type == RECV) begin
-            if (qp.ctx.flags[15:0] != `HGHCA_QP_ST_UD) begin
+            if (qp.ctx.flags[23:16] != `HGHCA_QP_ST_UD) begin
                 raw_data = 0;
                 data_fifo.clean();
                 raw_data[127:0] = {
@@ -621,7 +621,7 @@ class hca_queue_pair extends uvm_object;
                 data_fifo.push(trans2comb(raw_data));
                 mem.write_block(base_paddr + wqe_offset, data_fifo, 32 + sg_num * 16);
             end
-            else if (qp.ctx.flags[15:0] == `HGHCA_QP_ST_UD) begin
+            else if (qp.ctx.flags[23:16] == `HGHCA_QP_ST_UD) begin
                 raw_data = 0;
                 data_fifo.clean();
                 raw_data[127:0] = {
