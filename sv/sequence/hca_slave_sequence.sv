@@ -129,42 +129,47 @@ class hca_slave_sequence extends uvm_sequence #(hca_pcie_item);
                 break;
             end
             if (received_item.rq_req_type == MEM_RD) begin
+                int i;
                 sent_item = hca_pcie_item::type_id::create("sent_item");
                 start_item(sent_item);
                 `uvm_info("NOTICE", $sformatf("memory read process begin in slave sequence"), UVM_LOW);
 
                 // set rc descriptor field values in sent_item
-                sent_item.item_type                     = DMA_RSP;
-                sent_item.rc_addr                       = received_item.rq_addr[11:0];
-                sent_item.rc_error_code                 = 0; // depends on memory read result
-                sent_item.rc_byte_count                 = {received_item.rq_dword_count, 2'b00}; // 128/256/512/1024/2048/4096 Bytes, depends on rq
-                sent_item.rc_locked_read_completion     = 0; // if is a resp to a locked read set to 1, otherwise 0
-                sent_item.rc_request_completed          = 1; // indicates the end of the completions of a request
-                sent_item.rc_dword_count                = received_item.rq_dword_count;
-                sent_item.rc_completion_status          = 3'b000;
-                sent_item.rc_poisoned_completion        = 0; // unclear the use
-                sent_item.rc_requester_device           = received_item.rq_requester_device;
-                sent_item.rc_requester_bus              = received_item.rq_requester_bus;
-                sent_item.rc_tag                        = received_item.rq_tag;
-                sent_item.rc_completer_device           = 0;
-                sent_item.rc_completer_bus              = 0;
-                sent_item.rc_tc                         = 0;
-                sent_item.rc_attr                       = 0;
+                sent_item.item_type                         = DMA_RSP;
+
+                // set rc_addr
+                i = 0;
+                while (received_item.rq_first_be[i] == 0) begin
+                    i++;
+                end
+                sent_item.rc_addr                           = received_item.rq_addr[11:0] + i;
+
+                sent_item.rc_error_code                     = 0; // depends on memory read result
+                sent_item.rc_byte_count                     = get_byte_count(received_item.rq_dword_count, received_item.rq_first_be, received_item.rq_last_be);
+                sent_item.rc_locked_read_completion         = 0; // if is a resp to a locked read set to 1, otherwise 0
+                sent_item.rc_request_completed              = 1; // indicates the end of the completions of a request
+                sent_item.rc_dword_count                    = received_item.rq_dword_count;
+                sent_item.rc_completion_status              = 3'b000;
+                sent_item.rc_poisoned_completion            = 0; // unclear the use
+                sent_item.rc_requester_device               = received_item.rq_requester_device;
+                sent_item.rc_requester_bus                  = received_item.rq_requester_bus;
+                sent_item.rc_tag                            = received_item.rq_tag;
+                sent_item.rc_completer_device               = 0;
+                sent_item.rc_completer_bus                  = 0;
+                sent_item.rc_tc                             = 0;
+                sent_item.rc_attr                           = 0;
+                sent_item.rc_first_be                       = received_item.rq_first_be;
+                sent_item.rc_last_be                        = received_item.rq_last_be;
                 // read contents from mem
                 fifo = mem.read_block(received_item.rq_addr, received_item.rq_dword_count * 4);
-                `uvm_info("NOTICE", $sformatf("mem read finished. addr = %h, dword_count: %h", received_item.rq_addr, received_item.rq_dword_count), UVM_LOW);
+                `uvm_info("NOTICE", $sformatf("mem read finished. addr = %h, dword_count: %h, byte_count: %h, first_be: %h, last_be: %h", 
+                    received_item.rq_addr, received_item.rq_dword_count, sent_item.rc_byte_count, sent_item.rc_first_be, sent_item.rc_last_be), UVM_LOW
+                );
                 while (fifo.get_depth() != 0) begin
                     temp_data = fifo.pop();
                     `uvm_info("NOTICE", $sformatf("read data content: %h", temp_data), UVM_HIGH);
                     sent_item.data_payload.push_back(temp_data);
                 end
-                // if (received_item.rq_addr[47:38] == 10'b1) begin // read request to QP
-                //     hca_queue_pair qp;
-                //     bit [32:0] qpn;
-                //     qpn = {18'b0, received_item.rq_addr[37:24]};
-                //     qp = q_list.get_qp(host_id, qpn);
-                //     qp.consume_wqe(received_item.rq_addr[23]);
-                // end
                 finish_item(sent_item);
             end
             else if (received_item.rq_req_type == MEM_WR) begin
@@ -252,6 +257,24 @@ class hca_slave_sequence extends uvm_sequence #(hca_pcie_item);
         `uvm_info("GLB_STOP_INFO", "slave sequence body end!", UVM_LOW);
     endtask: body
 
-    // function hca_fifo 
+    function int get_byte_count(int dw_cnt, bit [3:0] first_be, bit [3:0] last_be);
+        int byte_cnt = dw_cnt * 4;
+        int i = 0;
+        while (first_be[i] == 0) begin
+            i++;
+        end
+        byte_cnt = byte_cnt - i;
+        if (last_be == 0) begin
+            return byte_cnt;
+        end
+        else begin
+            i = 0;
+            while (last_be[3 - i] == 0) begin
+                i++;
+            end
+            byte_cnt = byte_cnt - i;
+            return byte_cnt;
+        end
+    endfunction: get_byte_count
 endclass: hca_slave_sequence
 `endif

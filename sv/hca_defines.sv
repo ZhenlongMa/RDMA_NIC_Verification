@@ -117,7 +117,7 @@
 ////////////////////////////////////////////////////////////
 `define RST_DELAY                       1000
 `define AFTER_RST_DELAY                 1000
-`define DL                              #0.1
+`define DL                              #1
 `define READ_GO_GAP                     30
 `define CFG_COMM_GAP                    2000
 `define CFG_GAP                         300  // time gap between master driver sends two item to DUT

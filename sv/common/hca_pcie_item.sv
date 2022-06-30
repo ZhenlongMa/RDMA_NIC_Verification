@@ -131,6 +131,8 @@ class hca_pcie_item extends uvm_sequence_item;
     rand bit     [7:  0]                        rc_completer_bus;
     rand bit     [2:  0]                        rc_tc;
     rand bit     [2:  0]                        rc_attr;
+    rand bit     [3:  0]                        rc_first_be;
+    rand bit     [3:  0]                        rc_last_be;
 
     rand bit     [95: 0]                        rc_desc;
     

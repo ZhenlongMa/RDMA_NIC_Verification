@@ -32,8 +32,8 @@ for ud_qp_num in [0, 2]:
                                 if (write_wqe_num != 0):
                                     continue
                         for sg_num in range(1, 7):
-                            for data_count in [10, 4, 8, 16, 32, 64]:
-                                if (data_count == 10):
+                            for data_count in [10, 313, 4, 8, 16, 32]:
+                                if (data_count == 10 or data_count == 313):
                                     data_unit = "B"
                                 else:
                                     data_unit = "KB"
@@ -79,7 +79,7 @@ for ud_qp_num in [0, 2]:
                                 if (write_wqe_num != 0):
                                     continue
                         for sg_num in range(1, 7):
-                            for data_count in [128, 256]:
+                            for data_count in [64, 128, 256]:
                                 if (data_count == 1):
                                     data_unit = "MB"
                                 else:

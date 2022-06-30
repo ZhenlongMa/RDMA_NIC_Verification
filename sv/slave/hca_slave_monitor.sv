@@ -136,6 +136,8 @@ class hca_slave_monitor extends uvm_monitor;
                     received_item.rq_tc                     = vif.s_axis_rq_tdata[123:121];
                     received_item.rq_attr                   = vif.s_axis_rq_tdata[126:124];
                     received_item.rq_force_ecrc             = vif.s_axis_rq_tdata[127];
+                    received_item.rq_first_be               = vif.s_axis_rq_tuser[3:0];
+                    received_item.rq_last_be                = vif.s_axis_rq_tuser[7:4];
                 end
                 else if (vif.s_axis_rq_tdata[78:75] == `PCIE_MEM_WR) begin
                     `uvm_info("NOTICE", $sformatf("received dma write request! addr: %h", {vif.s_axis_rq_tdata[63:2], 2'b0}), UVM_LOW);
