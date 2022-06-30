@@ -243,8 +243,8 @@ class hca_queue_pair extends uvm_object;
                 data_seg_unit.byte_count = sg_data_cnt;
                 data_seg_unit.lkey = local_mpt.key;
                 data_seg_unit.addr = local_mpt.start + local_addr_offset;
-                `uvm_info("WQE_INFO", $sformatf("data_seg: byte count: %h, lkey: %h, addr: %h, op: %h, qpn: %h, host_id: %h", 
-                    data_seg_unit.byte_count, data_seg_unit.lkey, data_seg_unit.addr, op_type, ctx.local_qpn, host_id), UVM_LOW
+                `uvm_info("WQE_INFO", $sformatf("wqe_id: %h, data_seg: byte count: %h, lkey: %h, addr: %h, op: %h, qpn: %h, host_id: %h", 
+                    i, data_seg_unit.byte_count, data_seg_unit.lkey, data_seg_unit.addr, op_type, ctx.local_qpn, host_id), UVM_LOW
                 );
                 temp_wqe.data_seg.push_back(data_seg_unit);
             end
@@ -261,6 +261,9 @@ class hca_queue_pair extends uvm_object;
                     end
                     temp_wqe.raddr_seg.raddr = remote_mpt.start + remote_addr_offset;
                     temp_wqe.raddr_seg.rkey = remote_mpt.key;
+                    `uvm_info("WQE_INFO", $sformatf("wqe_id: %h, raddr_seg: rkey: %h, addr: %h, qpn: %h, host_id: %h", 
+                        i, temp_wqe.raddr_seg.rkey, temp_wqe.raddr_seg.raddr, ctx.local_qpn, host_id), UVM_LOW
+                    );
                 end
                 SEND,
                 RECV: begin
