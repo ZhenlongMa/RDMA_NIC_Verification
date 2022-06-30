@@ -92,6 +92,8 @@ class hca_slave_monitor extends uvm_monitor;
         fork
             // generate duv item
             forever begin
+                bit [3:0] first_be;
+                bit [3:0] last_be;
                 hca_pcie_item item_to_sqr_mbx;
                 item_to_sqr = hca_pcie_item::type_id::create("item_to_sqr", this);
                 item_to_scb = hca_pcie_item::type_id::create("item_to_scb", this);
@@ -154,6 +156,9 @@ class hca_slave_monitor extends uvm_monitor;
                     received_item.rq_tc                     = vif.s_axis_rq_tdata[123:121];
                     received_item.rq_attr                   = vif.s_axis_rq_tdata[126:124];
                     received_item.rq_force_ecrc             = vif.s_axis_rq_tdata[127];
+
+                    received_item.rq_first_be               = vif.s_axis_rq_tuser[3:0];
+                    received_item.rq_last_be                = vif.s_axis_rq_tuser[7:4];
                     `uvm_info("NOTICE", $sformatf("Write dw count: %h", received_item.rq_dword_count), UVM_LOW);
 
                     while (1) begin

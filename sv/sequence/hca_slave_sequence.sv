@@ -169,15 +169,81 @@ class hca_slave_sequence extends uvm_sequence #(hca_pcie_item);
             end
             else if (received_item.rq_req_type == MEM_WR) begin
                 // do not need to send response to duv
+                int length;
+                addr start_addr;
                 hca_fifo #(.width(256)) temp_fifo;
                 temp_fifo = hca_fifo #(.width(256))::type_id::create("temp_fifo");
                 while (received_item.data_payload.size() != 0) begin
-                    // temp_fifo.push(received_item.data_payload.pop_front());
                     temp_data = received_item.data_payload.pop_front();
                     temp_fifo.push(temp_data);
-                    `uvm_info("NOTICE", $sformatf("write data: %h, addr: %h", temp_data, received_item.rq_addr), UVM_LOW);
+                    // `uvm_info("NOTICE", $sformatf("write data: %h, addr: %h", temp_data, received_item.rq_addr), UVM_LOW);
                 end
-                mem.write_block(received_item.rq_addr, temp_fifo, received_item.rq_dword_count * 4);
+
+                // consider last_be and first_be
+                length = received_item.rq_dword_count * 4;
+                case (received_item.rq_first_be)
+                    4'b1111: begin
+                        start_addr = received_item.rq_addr;
+                        length = length;
+                    end
+                    4'b1110: begin
+                        start_addr = received_item.rq_addr + 1;
+                        temp_fifo.pop_byte();
+                        length -= 1;
+                    end
+                    4'b1100: begin
+                        start_addr = received_item.rq_addr + 2;
+                        temp_fifo.pop_byte();
+                        temp_fifo.pop_byte();
+                        length -= 2;
+                    end
+                    4'b1000: begin
+                        start_addr = received_item.rq_addr + 3;
+                        temp_fifo.pop_byte();
+                        temp_fifo.pop_byte();
+                        temp_fifo.pop_byte();
+                        length -= 3;
+                    end
+                    4'b0001: begin
+                        length = 1;
+                    end
+                    4'b0011: begin
+                        length = 2;
+                    end
+                    4'b0111: begin
+                        length = 3;
+                    end
+                    default: begin
+                        `uvm_fatal("BE_ERROR", $sformatf("rq_first_be error: %h", received_item.rq_first_be));
+                    end
+                endcase
+
+                case (received_item.rq_last_be)
+                    4'b1111: begin
+                        length = length;
+                    end
+                    4'b0111: begin
+                        length -= 1;
+                    end
+                    4'b0011: begin
+                        length -= 2;
+                    end
+                    4'b0001: begin
+                        length -= 3;
+                    end
+                    4'b0000: begin
+                        if (length <= 4) begin
+                        end
+                        else begin
+                            `uvm_fatal("BE_ERROR", $sformatf("rq_last_be error, last be: %h, first be: %h", received_item.rq_last_be, received_item.rq_first_be));
+                        end
+                    end
+                    default: begin
+                        `uvm_fatal("BE_ERROR", $sformatf("rq_last_be error: %h", received_item.rq_last_be));
+                    end
+                endcase
+
+                mem.write_block(start_addr, temp_fifo, length);
             end
             else begin
                 `uvm_error("PCIE_REQ_TYPE_ERR", "received item request type illegal in slave sequence!");
@@ -185,5 +251,7 @@ class hca_slave_sequence extends uvm_sequence #(hca_pcie_item);
         end
         `uvm_info("GLB_STOP_INFO", "slave sequence body end!", UVM_LOW);
     endtask: body
+
+    // function hca_fifo 
 endclass: hca_slave_sequence
 `endif

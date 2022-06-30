@@ -92,9 +92,11 @@ class hca_queue_pair extends uvm_object;
     // invoked       : by create_and_write_wqes
     //------------------------------------------------------------------------------
     task put_wqe(
-        e_op_type op_que[$],
-        mpt local_mpt_que[$],
-        mpt remote_mpt_que[$],
+        e_op_type op_que[$], // opcode of each WQE
+        mpt local_mpt_que[$], // used in data_seg
+        mpt remote_mpt_que[$], // used in raddr_seg or check queue of RECV
+        addr local_addr_offset_que[$], // its length should be equal to local_mpt_que
+        addr remote_addr_offset_que[$], // its length should be equal to remote_mpt_que
         hca_queue_list q_list,
         hca_check_mem_list check_list,
         int sg_num,
@@ -105,10 +107,14 @@ class hca_queue_pair extends uvm_object;
         e_op_type next_op_type;
         mpt local_mpt;
         mpt remote_mpt;
+        addr local_addr_offset;
+        addr remote_addr_offset;
         int queue_size = 512 * 1024;
         wqe_data_seg_unit data_seg_unit;
         mpt local_mpt_que_check[$];
         mpt remote_mpt_que_check[$];
+        addr local_addr_offset_que_check[$];
+        addr remote_addr_offset_que_check[$];
         int host_id;
         int remote_host_id;
         bit [10:0] proc_id;
@@ -124,16 +130,21 @@ class hca_queue_pair extends uvm_object;
 
         local_mpt_que_check = local_mpt_que;
         remote_mpt_que_check = remote_mpt_que;
+        local_addr_offset_que_check = local_addr_offset_que;
+        remote_addr_offset_que_check = remote_addr_offset_que;
         wqe_num = op_que.size();
 
-        // if (wqe_num != op_que.size()) begin
-        //     `uvm_fatal("WQE_NUM_ERR", $sformatf("wqe_num != op_que.size! wqe_num = %d, op_que.size = %d.", wqe_num, op_que.size()));
-        // end
-
         next_op_type = op_que.pop_front();
+
+        if (local_mpt_que.size() != local_addr_offset_que.size()) begin
+            `uvm_fatal("QUEUE_ERROR", $sformatf("local_mpt_que.size != local_addr_offset_que.size!"));
+        end
+
+        if (remote_mpt_que.size() != remote_addr_offset_que.size()) begin
+            `uvm_fatal("QUEUE_ERROR", $sformatf("remote_mpt_que.size != remote_addr_offset_que.size!"));
+        end
         
         for (int i = 0; i < wqe_num; i++) begin
-        // for (int i = 0; i < op_que.size() + 1; i++) begin
             wqe temp_wqe;
 
             op_type = next_op_type;
@@ -223,9 +234,18 @@ class hca_queue_pair extends uvm_object;
             // set data seg
             for (int data_seg_id = 0; data_seg_id < sg_num; data_seg_id++) begin
                 local_mpt = local_mpt_que.pop_front();
+                local_addr_offset = local_addr_offset_que.pop_front();
+                if (local_addr_offset > local_mpt.length) begin
+                    `uvm_fatal("ADDR_ERROR", $sformatf("local address offset exceeds size of MPT! key: %h, offset: %h, size: %h", 
+                        local_mpt.key, local_addr_offset, local_mpt.length)
+                    );
+                end
                 data_seg_unit.byte_count = sg_data_cnt;
                 data_seg_unit.lkey = local_mpt.key;
-                data_seg_unit.addr = local_mpt.start;
+                data_seg_unit.addr = local_mpt.start + local_addr_offset;
+                `uvm_info("WQE_INFO", $sformatf("data_seg: byte count: %h, lkey: %h, addr: %h, op: %h, qpn: %h, host_id: %h", 
+                    data_seg_unit.byte_count, data_seg_unit.lkey, data_seg_unit.addr, op_type, ctx.local_qpn, host_id), UVM_LOW
+                );
                 temp_wqe.data_seg.push_back(data_seg_unit);
             end
             
@@ -234,7 +254,12 @@ class hca_queue_pair extends uvm_object;
                 WRITE,
                 READ: begin
                     remote_mpt = remote_mpt_que.pop_front();
-                    temp_wqe.raddr_seg.raddr = remote_mpt.start;
+                    remote_addr_offset = remote_addr_offset_que.pop_front();
+                    if (remote_addr_offset > remote_mpt.length) begin
+                        `uvm_fatal("ADDR_ERROR", $sformatf("remote address offset exceeds size of MPT! key: %h, offset: %h, size: %h", 
+                            remote_mpt.key, remote_addr_offset, remote_mpt.length));
+                    end
+                    temp_wqe.raddr_seg.raddr = remote_mpt.start + remote_addr_offset;
                     temp_wqe.raddr_seg.rkey = remote_mpt.key;
                 end
                 SEND,
@@ -264,7 +289,19 @@ class hca_queue_pair extends uvm_object;
 
             // send source address, destination address and length to scoreboard, no need for SEND
             if (op_type != SEND) begin
-                send_mem_check(host_id, remote_host_id, proc_id, qp.proc_id, temp_wqe, op_type, local_mpt_que_check, remote_mpt_que_check, check_list);
+                send_mem_check(
+                    host_id, 
+                    remote_host_id, 
+                    proc_id, 
+                    qp.proc_id, 
+                    temp_wqe, 
+                    op_type, 
+                    local_mpt_que_check, 
+                    remote_mpt_que_check, 
+                    local_addr_offset_que_check,
+                    remote_addr_offset_que_check,
+                    check_list
+                );
             end
 
             // send cqe to scoreboard
@@ -277,12 +314,12 @@ class hca_queue_pair extends uvm_object;
             else begin
                 qp.sq_header += desc_byte_len;
             end
-            if ((qp.sq_header - qp.sq_tail) > 2048) begin
-                `uvm_fatal("QP_OVERLAY", "SQ header exceeds tail!");
-            end
-            if ((qp.rq_header - qp.rq_tail) > 2048) begin
-                `uvm_fatal("QP_OVERLAY", "RQ header exceeds tail!");
-            end
+            // if ((qp.sq_header - qp.sq_tail) > 2048) begin
+            //     `uvm_fatal("QP_OVERLAY", "SQ header exceeds tail!");
+            // end
+            // if ((qp.rq_header - qp.rq_tail) > 2048) begin
+            //     `uvm_fatal("QP_OVERLAY", "RQ header exceeds tail!");
+            // end
         end
         qp.sq_last_header = qp.sq_header;
         `uvm_info("NOTICE", "put_wqe finished!", UVM_HIGH);
@@ -310,15 +347,21 @@ class hca_queue_pair extends uvm_object;
         bit [10:0] remote_proc_id,
         wqe input_wqe,
         e_op_type op_type,
-        mpt local_mpt_que[$],
-        mpt remote_mpt_que[$],
+        mpt recv_dst_mpt_que[$],
+        mpt recv_src_mpt_que[$],
+        addr recv_dst_addr_offset_que[$],
+        addr recv_src_addr_offset_que[$],
         hca_check_mem_list check_list
     );
         check_mem_unit check_unit;
         wqe_data_seg_unit temp_data_seg;
         addr offset = 0;
-        mpt local_mpt;
-        mpt remote_mpt;
+        mpt recv_dst_mpt;
+        mpt recv_src_mpt;
+        addr recv_dst_addr_offset;
+        addr recv_src_addr_offset;
+
+        // if op is READ or WRITE, use WQE to check
         if (op_type == READ) begin
             while (input_wqe.data_seg.size() != 0) begin
                 temp_data_seg = input_wqe.data_seg.pop_front();
@@ -327,8 +370,8 @@ class hca_queue_pair extends uvm_object;
                 check_unit.length = temp_data_seg.byte_count;
                 check_unit.src_addr = `PA(proc_id, input_wqe.raddr_seg.raddr) + offset;
                 check_unit.dst_addr = `PA(proc_id, temp_data_seg.addr);
-                `uvm_info("MEM_CHECK_NOTICE", $sformatf("send memory check unit, src_addr: %h, dst_addr: %h, operation type: %0d", 
-                                                 check_unit.src_addr, check_unit.dst_addr, op_type), UVM_LOW);
+                `uvm_info("MEM_CHECK_NOTICE", $sformatf("send memory check unit, src_addr: %h, dst_addr: %h, length: %h, operation type: %0d", 
+                                                 check_unit.src_addr, check_unit.dst_addr, check_unit.length, op_type), UVM_LOW);
                 check_list.check_list[host_id].push_back(check_unit);
                 offset += temp_data_seg.byte_count;
             end
@@ -347,16 +390,22 @@ class hca_queue_pair extends uvm_object;
                 offset += temp_data_seg.byte_count;
             end
         end
+        // if op is RECV, use MPT and WQE to check
         else if (op_type == RECV) begin // WARNING
+            if (input_wqe.data_seg.size() != recv_src_mpt_que.size() || input_wqe.data_seg.size() != recv_src_addr_offset_que.size()) begin
+                `uvm_fatal("QUEUE_ERROR", $sformatf("queue size error! input_wqe.data_seg.size: %h, recv_src_mpt_que.size: %h, recv_src_addr_offset_que.size: %h",
+                    input_wqe.data_seg.size(), recv_src_mpt_que.size(), recv_src_addr_offset_que.size())
+                );
+            end
             while (input_wqe.data_seg.size() != 0) begin
                 temp_data_seg = input_wqe.data_seg.pop_front();
-                remote_mpt = remote_mpt_que.pop_front();
-                local_mpt = local_mpt_que.pop_front();
+                recv_src_mpt = recv_src_mpt_que.pop_front();
+                recv_src_addr_offset = recv_src_addr_offset_que.pop_front();
                 check_unit.src_host = remote_host_id;
                 check_unit.dst_host = host_id;
                 check_unit.length = temp_data_seg.byte_count;
-                check_unit.src_addr = `PA(remote_proc_id, remote_mpt.start);
-                check_unit.dst_addr = `PA(proc_id, local_mpt.start);
+                check_unit.src_addr = `PA(remote_proc_id, recv_src_mpt.start + recv_src_addr_offset);
+                check_unit.dst_addr = `PA(proc_id, temp_data_seg.addr);
                 `uvm_info("MEM_CHECK_NOTICE", $sformatf("send memory check unit, src_addr: %h, dst_addr: %h, operation type: %0d", 
                                                  check_unit.src_addr, check_unit.dst_addr, op_type), UVM_LOW);
                 check_list.check_list[host_id].push_back(check_unit);

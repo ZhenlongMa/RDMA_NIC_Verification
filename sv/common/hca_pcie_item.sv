@@ -112,6 +112,8 @@ class hca_pcie_item extends uvm_sequence_item;
     rand bit     [2:  0]                        rq_tc;
     rand bit     [2:  0]                        rq_attr;
     rand bit                                    rq_force_ecrc;
+    rand bit     [3:  0]                        rq_first_be;
+    rand bit     [3:  0]                        rq_last_be;
 
     // requester completion
     rand bit     [11: 0]                        rc_addr;
@@ -195,6 +197,8 @@ class hca_pcie_item extends uvm_sequence_item;
         `uvm_field_int(rq_tc,               UVM_DEFAULT|UVM_HEX|UVM_NOCOMPARE|UVM_NOPRINT)
         `uvm_field_int(rq_attr,             UVM_DEFAULT|UVM_HEX|UVM_NOCOMPARE|UVM_NOPRINT)
         `uvm_field_int(rq_force_ecrc,       UVM_DEFAULT|UVM_HEX|UVM_NOCOMPARE|UVM_NOPRINT)
+        `uvm_field_int(rq_first_be,         UVM_DEFAULT|UVM_HEX|UVM_NOCOMPARE|UVM_NOPRINT)
+        `uvm_field_int(rq_last_be,          UVM_DEFAULT|UVM_HEX|UVM_NOCOMPARE|UVM_NOPRINT)
         
         `uvm_field_int(cq_addr,             UVM_DEFAULT|UVM_HEX|UVM_NOCOMPARE|UVM_NOPRINT)
         `uvm_field_int(cq_addr_type,        UVM_DEFAULT|UVM_HEX|UVM_NOCOMPARE|UVM_NOPRINT)

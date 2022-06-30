@@ -507,10 +507,14 @@ class test_direct_param extends uvm_test;
     );
         mpt local_mpt;
         mpt remote_mpt;
-        mpt sq_local_mpt_que[$];
+        mpt sq_local_mpt_que[$];    // sg entry mpt in SQ data seg
         mpt sq_remote_mpt_que[$];
         mpt rq_send_mpt_que[$];
         mpt rq_recv_mpt_que[$];
+        addr sq_local_offset_que[$];
+        addr sq_remote_offset_que[$];
+        addr rq_send_offset_que[$];
+        addr rq_recv_offset_que[$];
         addr local_paddr;
         addr local_vaddr;
         addr remote_vaddr;
@@ -520,7 +524,7 @@ class test_direct_param extends uvm_test;
         e_op_type rq_op_que[$];
         hca_queue_pair remote_qp;
         bit [31:0] remote_qpn;
-        // bit [31:0] sg_entry_data_count = page_num * 4096; // data count in bytes handled by each scatter-gather entry
+
         int remote_host_id;
         int host_id;
         bit [10:0] proc_id;
@@ -539,7 +543,7 @@ class test_direct_param extends uvm_test;
         end
 
         /*------------------------------------------------------------------
-        // MEMORY SPACE FOR WQE
+        // MEMORY SPACE FOR NETWORK DATA
         // RC:
         // |    SEND    |  RECEIVE  |   WRITE   |   READ    |
         // UC:
@@ -570,6 +574,10 @@ class test_direct_param extends uvm_test;
                     );
                     sq_local_mpt_que.push_back(local_mpt);
                     rq_send_mpt_que.push_back(local_mpt);
+
+                    // set sg entry address offset relative to start address of memory region
+                    sq_local_offset_que.push_back(src_vaddr + wqe_id * wqe_data_count + sg_id * sg_entry_data_count - local_mpt.start);
+                    rq_send_offset_que.push_back(src_vaddr + wqe_id * wqe_data_count + sg_id * sg_entry_data_count - local_mpt.start);
                 end
                 sq_op_que.push_back(SEND);
                 for (int sg_id = 0; sg_id < sg_num; sg_id++) begin
@@ -585,6 +593,7 @@ class test_direct_param extends uvm_test;
                         8'b1000_0111
                     );
                     rq_recv_mpt_que.push_back(remote_mpt);
+                    rq_recv_offset_que.push_back(dst_vaddr + wqe_id * wqe_data_count + sg_id * sg_entry_data_count - remote_mpt.start);
                 end
                 rq_op_que.push_back(RECV);
             end
@@ -615,6 +624,7 @@ class test_direct_param extends uvm_test;
                         8'b1000_0111
                     );
                     sq_local_mpt_que.push_back(local_mpt);
+                    sq_local_offset_que.push_back(src_vaddr + wqe_id * wqe_data_count + sg_id * sg_entry_data_count - local_mpt.start);
                 end
                 remote_mpt = create_mr(
                     remote_host_id,
@@ -627,6 +637,8 @@ class test_direct_param extends uvm_test;
                     8'b1000_0111
                 );
                 sq_remote_mpt_que.push_back(remote_mpt);
+                sq_remote_offset_que.push_back(dst_vaddr + wqe_id * wqe_data_count - remote_mpt.start);
+
                 sq_op_que.push_back(WRITE);
             end
             else if (wqe_id < send_wqe_num + recv_wqe_num + write_wqe_num + read_wqe_num) begin // READ
@@ -659,6 +671,8 @@ class test_direct_param extends uvm_test;
                     8'b1000_0111
                 );
                 sq_remote_mpt_que.push_back(remote_mpt);
+                sq_remote_offset_que.push_back(src_vaddr + wqe_id * wqe_data_count - remote_mpt.start);
+
                 for (int sg_id = 0; sg_id < sg_num; sg_id++) begin
                     local_mpt = create_mr(
                         host_id, 
@@ -671,6 +685,7 @@ class test_direct_param extends uvm_test;
                         8'b1000_0111
                     );
                     sq_local_mpt_que.push_back(local_mpt);
+                    sq_local_offset_que.push_back(dst_vaddr + wqe_id * wqe_data_count + sg_id * sg_entry_data_count - local_mpt.start);
                 end
                 sq_op_que.push_back(READ);
             end
@@ -684,6 +699,8 @@ class test_direct_param extends uvm_test;
             sq_op_que,
             sq_local_mpt_que,
             sq_remote_mpt_que,
+            sq_local_offset_que,
+            sq_remote_offset_que,
             q_list,
             check_list,
             sg_num,
@@ -694,6 +711,8 @@ class test_direct_param extends uvm_test;
             rq_op_que,
             rq_recv_mpt_que,
             rq_send_mpt_que,
+            rq_recv_offset_que,
+            rq_send_offset_que,
             q_list,
             check_list,
             sg_num,
@@ -944,6 +963,7 @@ class test_direct_param extends uvm_test;
         addr mtt_icm_addr;
         addr mtt_icm_idx;
         addr mpt_icm_addr;
+        addr mr_size;
         mtt temp_mtt_item;
         addr mtt_seg;
 
@@ -959,7 +979,7 @@ class test_direct_param extends uvm_test;
             end
         end
 
-        // set amount of mtt entries
+        // set amount of mtt entries and size of memory region
         // if (size % page_size == 0) begin
         //     mtt_num = size / page_size;
         // end
@@ -968,9 +988,11 @@ class test_direct_param extends uvm_test;
         // end
         if ((size + start_vaddr[11:0]) % page_size == 0) begin
             mtt_num = (size + start_vaddr[11:0]) / page_size;
+            mr_size = mtt_num * `PAGE_SIZE;
         end
         else begin
             mtt_num = (size + start_vaddr[11:0]) / page_size + 1;
+            mr_size = mtt_num * `PAGE_SIZE;
         end
 
         // set amount of pages for mtt in ICM space
@@ -1010,7 +1032,7 @@ class test_direct_param extends uvm_test;
         /////////////////////////////////////////////////////////////////////////
         //   SW_OWNS  MIO  BIND_ENABLE  PHYSICAL  REGION  LOCAL_WRITE  REMOTE_WRITE  REMOTE_READ  REMOTE_ATOMIC  MW_BIND  ZERO_BASED  ON_DEMAND
         new_mpt.flags = {16'hf002, auth_flag}; // 32'b1111_0000_0000_0010_0000_0001_1000_0011
-        new_mpt.length = size;
+        new_mpt.length = mr_size;
         if (is_zbva == TRUE) begin
             new_mpt.start = 0;
         end
@@ -1023,8 +1045,8 @@ class test_direct_param extends uvm_test;
 
         cfg_agt.sw2hw_mpt(host_id, new_mpt);
         `uvm_info("CREATE_MR_NOTICE", 
-            $sformatf("create mr success! host_id: %h, size: %h, key: %h, input start vaddr: %h, MR start vaddr: %h, pd: %h, page size: %h", 
-                host_id, size, new_mpt.key, start_vaddr, new_mpt.start, pd, page_size), UVM_LOW);
+            $sformatf("create mr success! host_id: %h, key: %h, input start vaddr: %h, MR start vaddr: %h, input size: %h, MR size: %h, pd: %h, page size: %h", 
+                host_id, new_mpt.key, start_vaddr, new_mpt.start, size, mr_size, pd, page_size), UVM_LOW);
         return new_mpt;
     endfunction: create_mr
 
