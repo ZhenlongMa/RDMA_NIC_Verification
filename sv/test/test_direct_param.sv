@@ -14,6 +14,7 @@
 //
 //  AUTHOR          DATE          VERSION          REASON
 //  mazhenlong      2021-07-30    v1.0             create
+//  mazhenlong      2022-07-03    v1.1             fix wqe start address bug
 //
 //----------------------------------------------------------------------------
 
@@ -428,7 +429,7 @@ class test_direct_param extends uvm_test;
                         begin
                             hca_queue_pair qp;
                             qp = q_list.qp_list[host_id][j];
-                            create_and_write_wqes(qp, wqe_data_count, send_wqe_num, recv_wqe_num, read_wqe_num, write_wqe_num, sg_num, sg_data_cnt);
+                            create_and_write_wqes(qp, db_id, wqe_data_count, send_wqe_num, recv_wqe_num, read_wqe_num, write_wqe_num, sg_num, sg_data_cnt);
                         end
                     join_none
                 end
@@ -457,15 +458,15 @@ class test_direct_param extends uvm_test;
                                     qp = q_list.qp_list[a_host_id][j];
                                     if (send_wqe_num != 0) begin
                                         opcode = `VERBS_SEND;
-                                        send_db(a_host_id, proc_id, qp, opcode);
+                                        send_db(a_host_id, proc_id, db_id, qp, opcode);
                                     end
                                     else if (write_wqe_num != 0 && qp.ctx.flags[23:16] != `HGHCA_QP_ST_UD) begin
                                         opcode = `VERBS_RDMA_WRITE;
-                                        send_db(a_host_id, proc_id, qp, opcode);
+                                        send_db(a_host_id, proc_id, db_id, qp, opcode);
                                     end
                                     else if (read_wqe_num != 0 && qp.ctx.flags[23:16] == `HGHCA_QP_ST_RC) begin
                                         opcode = `VERBS_RDMA_READ;
-                                        send_db(a_host_id, proc_id, qp, opcode);
+                                        send_db(a_host_id, proc_id, db_id, qp, opcode);
                                     end
                                     else begin
                                         `uvm_info("DB_INFO", $sformatf("useless QP! qpn: %h", qp.ctx.local_qpn), UVM_LOW);
@@ -499,6 +500,7 @@ class test_direct_param extends uvm_test;
     //------------------------------------------------------------------------------
     function create_and_write_wqes(
         hca_queue_pair qp,
+        int db_id,
         bit [31:0] wqe_data_count,
         int send_wqe_num,
         int recv_wqe_num,
@@ -517,11 +519,11 @@ class test_direct_param extends uvm_test;
         addr sq_remote_offset_que[$];
         addr rq_send_offset_que[$];
         addr rq_recv_offset_que[$];
-        addr local_paddr;
-        addr local_vaddr;
-        addr remote_vaddr;
-        addr remote_paddr;
-        e_op_type op_type;
+        // addr local_paddr;
+        // addr local_vaddr;
+        // addr remote_vaddr;
+        // addr remote_paddr;
+        // e_op_type op_type;
         e_op_type sq_op_que[$];
         e_op_type rq_op_que[$];
         hca_queue_pair remote_qp;
@@ -530,12 +532,12 @@ class test_direct_param extends uvm_test;
         int remote_host_id;
         int host_id;
         bit [10:0] proc_id;
-        int sq_wqe_num = send_wqe_num + read_wqe_num + write_wqe_num;
+        // int sq_wqe_num = send_wqe_num + read_wqe_num + write_wqe_num;
 
         host_id = qp.host_id;
         proc_id = qp.proc_id;
         remote_qp = qp.remote_qp;
-        remote_qpn = remote_qp.ctx.local_qpn;
+        // remote_qpn = remote_qp.ctx.local_qpn;
 
         if (host_id == 0) begin
             remote_host_id = 1;
@@ -556,11 +558,12 @@ class test_direct_param extends uvm_test;
         // create data memory regions
         for (int wqe_id = 0; wqe_id < send_wqe_num + recv_wqe_num + write_wqe_num + read_wqe_num; wqe_id++) begin
             if (wqe_id < send_wqe_num) begin // SEND
-                // start physical address of SEND source data
-                addr src_paddr = `PA_DATA(proc_id, qp.ctx.local_qpn); 
+                // start physical address of THIS DOORBELL
+                addr src_paddr = `PA_DATA(proc_id, qp.ctx.local_qpn) + db_id * this.wqe_num * wqe_data_count; 
                 addr src_vaddr = `VA(src_paddr);
                 // start physical address of RECV buffer corresponding to SEND above
-                addr dst_paddr = `PA_DATA(proc_id, qp.ctx.remote_qpn) + `DATA_RECV_BUFF_GAP + send_wqe_num * wqe_data_count;
+                // addr dst_paddr = `PA_DATA(proc_id, qp.ctx.remote_qpn) + `DATA_RECV_BUFF_GAP + send_wqe_num * wqe_data_count;
+                addr dst_paddr = `PA_DATA(proc_id, qp.ctx.remote_qpn) + `DATA_RECV_BUFF_GAP + db_id * this.wqe_num * wqe_data_count;
                 addr dst_vaddr = `VA(dst_paddr);
                 for (int sg_id = 0; sg_id < sg_num; sg_id++) begin
                     // create MR for sending data
@@ -604,10 +607,14 @@ class test_direct_param extends uvm_test;
             end
             else if (wqe_id < send_wqe_num + recv_wqe_num + write_wqe_num) begin // WRITE
                 // start physical address of WRITE source data
-                addr src_paddr = `PA_DATA(proc_id, qp.ctx.local_qpn) + send_wqe_num * wqe_data_count + recv_wqe_num * wqe_data_count; 
+                // addr src_paddr = `PA_DATA(proc_id, qp.ctx.local_qpn) + send_wqe_num * wqe_data_count + recv_wqe_num * wqe_data_count; 
+                // addr src_vaddr = `VA(src_paddr);
+                addr src_paddr = `PA_DATA(proc_id, qp.ctx.local_qpn) + db_id * this.wqe_num * wqe_data_count;
                 addr src_vaddr = `VA(src_paddr);
                 // start physical address of WRITE buffer in receiver side
-                addr dst_paddr = `PA_DATA(proc_id, qp.ctx.remote_qpn) + `DATA_RECV_BUFF_GAP + send_wqe_num * wqe_data_count + recv_wqe_num * wqe_data_count;
+                // addr dst_paddr = `PA_DATA(proc_id, qp.ctx.remote_qpn) + `DATA_RECV_BUFF_GAP + send_wqe_num * wqe_data_count + recv_wqe_num * wqe_data_count;
+                // addr dst_vaddr = `VA(dst_paddr);
+                addr dst_paddr = `PA_DATA(proc_id, qp.ctx.remote_qpn) + `DATA_RECV_BUFF_GAP + db_id * this.wqe_num * wqe_data_count;
                 addr dst_vaddr = `VA(dst_paddr);
 
                 if (qp.ctx.flags[23:16] == `HGHCA_QP_ST_UD) begin
@@ -619,7 +626,7 @@ class test_direct_param extends uvm_test;
                         host_id, 
                         proc_id, 
                         sg_entry_data_count, 
-                        src_vaddr + wqe_id * wqe_data_count + sg_id * sg_entry_data_count, 
+                        src_vaddr + wqe_id * wqe_data_count + sg_id * sg_entry_data_count,
                         qp.ctx.pd, 
                         `PAGE_SIZE, 
                         FALSE, 
@@ -645,16 +652,18 @@ class test_direct_param extends uvm_test;
             end
             else if (wqe_id < send_wqe_num + recv_wqe_num + write_wqe_num + read_wqe_num) begin // READ
                 // start physical address of READ source data
-                addr src_paddr = `PA_DATA(proc_id, qp.ctx.remote_qpn) + 
-                                 send_wqe_num * wqe_data_count + 
-                                 recv_wqe_num * wqe_data_count + 
-                                 write_wqe_num * wqe_data_count;
+                // addr src_paddr = `PA_DATA(proc_id, qp.ctx.remote_qpn) + 
+                //                  send_wqe_num * wqe_data_count + 
+                //                  recv_wqe_num * wqe_data_count + 
+                //                  write_wqe_num * wqe_data_count;
+                addr src_paddr = `PA_DATA(proc_id, qp.ctx.remote_qpn) + db_id * this.wqe_num * wqe_data_count;
                 addr src_vaddr = `VA(src_paddr);
                 // start physical address of READ buffer
-                addr dst_paddr = `PA_DATA(proc_id, qp.ctx.local_qpn) + `DATA_RECV_BUFF_GAP + 
-                                 send_wqe_num * wqe_data_count + 
-                                 recv_wqe_num * wqe_data_count + 
-                                 write_wqe_num * wqe_data_count;
+                // addr dst_paddr = `PA_DATA(proc_id, qp.ctx.local_qpn) + `DATA_RECV_BUFF_GAP + 
+                //                  send_wqe_num * wqe_data_count + 
+                //                  recv_wqe_num * wqe_data_count + 
+                //                  write_wqe_num * wqe_data_count;
+                addr dst_paddr = `PA_DATA(proc_id, qp.ctx.local_qpn) + `DATA_RECV_BUFF_GAP + db_id * this.wqe_num * wqe_data_count;
                 addr dst_vaddr = `VA(dst_paddr);
 
                 if (qp.ctx.flags[23:16] == `HGHCA_QP_ST_UD || qp.ctx.flags[23:16] == `HGHCA_QP_ST_UC) begin
@@ -775,7 +784,8 @@ class test_direct_param extends uvm_test;
         `uvm_info("CONNECT_QP_INFO", 
             $sformatf("QP connected! host_a: %h, qp_a: %h, host_b: %h, qp_b: %h", 
                 host_id_a, qp_a.ctx.local_qpn, host_id_b, qp_b.ctx.local_qpn), 
-            UVM_LOW);
+            UVM_LOW
+        );
     endfunction: connect_qp
 
     //------------------------------------------------------------------------------
@@ -783,15 +793,20 @@ class test_direct_param extends uvm_test;
     // function      : create a doorbell and send it to virtual sequence
     // invoked       : by single_process
     //------------------------------------------------------------------------------
-    task send_db(int host_id, bit [10:0] proc_id, hca_queue_pair qp, bit [4:0] op_code);
+    task send_db(int host_id, bit [10:0] proc_id, int db_id, hca_queue_pair qp, bit [4:0] op_code);
         hca_pcie_item doorbell_item;
+        bit [15:0] first_wqe_byte_offset;
         doorbell db;
         doorbell_item = hca_pcie_item::type_id::create("doorbell_item", this);
-        if (qp.sq_tail[3:0] != 0) begin
-            `uvm_fatal("QP_ERR", $sformatf("sq_tail[3:0] is not zero! host_id: %h, qpn: %h, sq_tail: %h", 
+        first_wqe_byte_offset = qp.sq_tail % qp.sq_byte_size;
+        // What is this?
+        if (first_wqe_byte_offset[3:0] != 0) begin
+            `uvm_fatal("QP_ERR", $sformatf("first_wqe_byte_offset is not zero! host_id: %h, qpn: %h, sq_tail: %h", 
                 host_id, qp.ctx.local_qpn, qp.sq_tail));
         end
-        db.sq_head = {5'b0, qp.sq_tail[14:4]};
+        db.sq_head = first_wqe_byte_offset[15:4];
+        // first_wqe_byte_offset = db_id * this.wqe_num * `SQ_WQE_BYTE_LEN;
+        // db.sq_head = db_id * this.wqe_num * `SQ_WQE_BYTE_LEN;
         db.f0 = 0;
         db.opcode = op_code;
         db.qp_num = qp.ctx.local_qpn;
@@ -874,7 +889,7 @@ class test_direct_param extends uvm_test;
                 `uvm_fatal("CREATE_QP_ERR", "invalid service type!");
             end
         endcase
-        qpc.mtu_msgmax                  = 8'b0111_1111;
+        qpc.mtu_msgmax                  = {`QPC_MTU_4096, 5'b11111};
         qpc.rq_entry_sz_log             = math.log_func(`RQ_WQE_BYTE_LEN);
         qpc.sq_entry_sz_log             = math.log_func(`SQ_WQE_BYTE_LEN);
         qpc.local_qpn                   = qp_num;
@@ -902,6 +917,8 @@ class test_direct_param extends uvm_test;
         qp.host_id = host_id;
         qp.proc_id = proc_id;
         qp.mem = env.mem[host_id];
+        qp.sq_byte_size = 1024 * 512;
+        qp.rq_byte_size = 1024 * 512;
         // qp.sq_header = 0;
         // qp.sq_tail = 0;
         q_list.qp_list[host_id].push_back(qp);
@@ -1023,11 +1040,11 @@ class test_direct_param extends uvm_test;
                     mtt_seg = cfg_agt.write_mtt(host_id, {5'b0, proc_id, start_vaddr[47:12], 12'b0}, 255);
                 end
             end
-            if (mtt_num_sent + 255 <= mtt_num) begin
-                cfg_agt.write_mtt(host_id, {5'b0, proc_id, start_vaddr[47:12], 12'b0}, 255);
+            else if (mtt_num_sent + 255 <= mtt_num) begin
+                cfg_agt.write_mtt(host_id, {5'b0, proc_id, start_vaddr[47:12], 12'b0} + mtt_num_sent * 4096, 255);
             end
             else begin
-                cfg_agt.write_mtt(host_id, {5'b0, proc_id, start_vaddr[47:12], 12'b0}, mtt_num - mtt_num_sent);
+                cfg_agt.write_mtt(host_id, {5'b0, proc_id, start_vaddr[47:12], 12'b0} + mtt_num_sent * 4096, mtt_num - mtt_num_sent);
             end
         end
 
@@ -1068,7 +1085,9 @@ class test_direct_param extends uvm_test;
                 write_data[j] = $urandom();
             end
             data_fifo.push(write_data);
-            `uvm_info("DATA_NOTICE", $sformatf("write data: %h, host id: %h", write_data, host_id), UVM_LOW);
+            `uvm_info("DATA_NOTICE", $sformatf("write data: %h, phys_addr: %h, data count: %h, beat_id: %h, host id: %h", 
+                write_data, phys_addr, data_cnt, i, host_id), UVM_LOW
+            );
             write_data = 0;
         end
         env.mem[host_id].write_block(phys_addr, data_fifo, data_cnt);

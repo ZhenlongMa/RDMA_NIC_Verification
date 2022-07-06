@@ -171,6 +171,15 @@ class hca_slave_sequence extends uvm_sequence #(hca_pcie_item);
                     sent_item.data_payload.push_back(temp_data);
                 end
                 finish_item(sent_item);
+
+                if (received_item.rq_addr[47:38] == 10'b1) begin
+                    hca_queue_pair qp;
+                    bit [31:0] qpn;
+                    qpn = {18'b0, received_item.rq_addr[37:24]};
+                    qp = q_list.get_qp(host_id, qpn);
+                    qp.consume_wqe(received_item.rq_addr[23]);
+                    `uvm_info("QP_NOTICE", $sformatf("consume WQE, host_id: %0d, addr: %h", host_id, received_item.rq_addr), UVM_LOW);
+                end
             end
             else if (received_item.rq_req_type == MEM_WR) begin
                 // do not need to send response to duv
