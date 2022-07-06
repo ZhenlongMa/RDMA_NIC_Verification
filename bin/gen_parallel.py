@@ -1,8 +1,11 @@
 test_name = "test_direct_param"
 case_name = "test_direct"
-output_exe = "./hca_test"
+output_exe = "../hca_test"
 
 file = open("./case/small_datacount.sh", "w")
+file.write("rm -f ./small_datacount_log/*\n")
+file.write("rm -f ./small_datacount_wave/*\n")
+# file.write("#! /bin/csh\n")
 
 max_qp_num = 8192
 host_num = 2
@@ -35,8 +38,9 @@ for ud_qp_num in [0, 2]:
                                     data_unit = "B"
                                 else:
                                     data_unit = "KB"
-                                file.write(output_exe + " -uvmDebug +UVM_VERBOSITY=UVM_LOW " + \
-                                    "+vpdfile+" + "./case/small_datacount_wave/wave" + str(flag).zfill(flaglen) + ".vpd " +\
+                                file.write("bsub " + "-o " + "./small_datacount_log/bsublog" + str(flag).zfill(flaglen) + " " + output_exe + \
+                                    " -uvmDebug +UVM_VERBOSITY=UVM_LOW " + \
+                                    "+vpdfile+" + "./small_datacount_wave/wave" + str(flag).zfill(flaglen) + ".vpd " +\
                                     "+UVM_TESTNAME=" + test_name + \
                                     " +HOST_NUM=2 +PROC_NUM=2 ")
                                 file.write("+RC_QP_NUM=" + str(rc_qp_num) + " ")
@@ -50,10 +54,14 @@ for ud_qp_num in [0, 2]:
                                 file.write("+SG_NUM=" + str(sg_num) + " ")
                                 file.write("+DATA_CNT=" + str(data_count) + " ")
                                 file.write("+DATA_UNIT=" + data_unit + " ")
-                                file.write("-l ./case/small_datacount_log/case" + str(flag).zfill(flaglen) + ".log\n")
+                                # file.write("-l ./small_datacount_log/case" + str(flag).zfill(flaglen) + ".log" + " ")
+                                file.write("+vcs+lic+wait\n")
                                 flag = flag + 1
 
 file = open("./case/medium_datacount.sh", "w")
+file.write("rm -f ./medium_datacount_log/*\n")
+file.write("rm -f ./medium_datacount_wave/*\n")
+# file.write("#! /bin/csh\n")
 
 for ud_qp_num in [0, 2]:
     for uc_qp_num in [0, 2]:
@@ -80,8 +88,9 @@ for ud_qp_num in [0, 2]:
                                     data_unit = "MB"
                                 else:
                                     data_unit = "KB"
-                                file.write(output_exe + " -uvmDebug +UVM_VERBOSITY=UVM_LOW " + \
-                                    "+vpdfile+" + "./case/medium_datacount_wave/wave" + str(flag).zfill(flaglen) + ".vpd " +\
+                                file.write("bsub " + "-o " + "./medium_datacount_log/bsublog" + str(flag).zfill(flaglen) + " " + output_exe + \
+                                    " -uvmDebug +UVM_VERBOSITY=UVM_LOW " + \
+                                    "+vpdfile+" + "./medium_datacount_wave/wave" + str(flag).zfill(flaglen) + ".vpd " +\
                                     "+UVM_TESTNAME=" + test_name + \
                                     " +HOST_NUM=2 +PROC_NUM=2 ")
                                 file.write("+RC_QP_NUM=" + str(rc_qp_num) + " ")
@@ -95,10 +104,14 @@ for ud_qp_num in [0, 2]:
                                 file.write("+SG_NUM=" + str(sg_num) + " ")
                                 file.write("+DATA_CNT=" + str(data_count) + " ")
                                 file.write("+DATA_UNIT=" + data_unit + " ")
-                                file.write("-l ./case/medium_datacount_log/case" + str(flag).zfill(flaglen) + ".log\n")
+                                # file.write("-l ./medium_datacount_log/case" + str(flag).zfill(flaglen) + ".log\n")
+                                file.write("+vcs+lic+wait\n")
                                 flag = flag + 1
 
 file = open("./case/mix_service_type.sh", "w")
+file.write("rm -f ./mix_service_type_log/*\n")
+file.write("rm -f ./mix_service_type_wave/*\n")
+# file.write("#! /bin/csh\n")
 
 for ud_qp_num in [2, 10]:
     for uc_qp_num in [2, 10]:
@@ -125,8 +138,9 @@ for ud_qp_num in [2, 10]:
                                     data_unit = "B"
                                 else:
                                     data_unit = "KB"
-                                file.write(output_exe + " -uvmDebug +UVM_VERBOSITY=UVM_LOW " + \
-                                    "+vpdfile+" + "./case/mix_service_type_wave/wave" + str(flag).zfill(flaglen) + ".vpd " +\
+                                file.write("bsub " + "-o " + "./mix_service_type_log/bsublog" + str(flag).zfill(flaglen) + " " + output_exe + \
+                                    " -uvmDebug +UVM_VERBOSITY=UVM_LOW " + \
+                                    "+vpdfile+" + "./mix_service_type_wave/wave" + str(flag).zfill(flaglen) + ".vpd " +\
                                     "+UVM_TESTNAME=" + test_name + \
                                     " +HOST_NUM=2 +PROC_NUM=2 ")
                                 file.write("+RC_QP_NUM=" + str(rc_qp_num) + " ")
@@ -140,10 +154,14 @@ for ud_qp_num in [2, 10]:
                                 file.write("+SG_NUM=" + str(sg_num) + " ")
                                 file.write("+DATA_CNT=" + str(data_count) + " ")
                                 file.write("+DATA_UNIT=" + data_unit + " ")
-                                file.write("-l ./case/mix_service_type_log/case" + str(flag).zfill(flaglen) + ".log\n")
+                                # file.write("-l ./mix_service_type_log/case" + str(flag).zfill(flaglen) + ".log\n")
+                                file.write("+vcs+lic+wait\n")
                                 flag = flag + 1
 
 file = open("./case/mix_operation_type.sh", "w")
+file.write("rm -f ./mix_operation_type_log/*\n")
+file.write("rm -f ./mix_operation_type_wave/*\n")
+# file.write("#! /bin/csh\n")
 
 for ud_qp_num in [2]:
     for uc_qp_num in [2]:
@@ -170,8 +188,9 @@ for ud_qp_num in [2]:
                                     data_unit = "B"
                                 else:
                                     data_unit = "KB"
-                                file.write(output_exe + " -uvmDebug +UVM_VERBOSITY=UVM_LOW " + \
-                                    "+vpdfile+" + "./case/mix_operation_type_wave/wave" + str(flag).zfill(flaglen) + ".vpd " +\
+                                file.write("bsub " + "-o " + "./mix_operation_type_log/bsublog" + str(flag).zfill(flaglen) + " " + output_exe + \
+                                    " -uvmDebug +UVM_VERBOSITY=UVM_LOW " + \
+                                    "+vpdfile+" + "./mix_operation_type_wave/wave" + str(flag).zfill(flaglen) + ".vpd " +\
                                     "+UVM_TESTNAME=" + test_name + \
                                     " +HOST_NUM=2 +PROC_NUM=2 ")
                                 file.write("+RC_QP_NUM=" + str(rc_qp_num) + " ")
@@ -185,10 +204,14 @@ for ud_qp_num in [2]:
                                 file.write("+SG_NUM=" + str(sg_num) + " ")
                                 file.write("+DATA_CNT=" + str(data_count) + " ")
                                 file.write("+DATA_UNIT=" + data_unit + " ")
-                                file.write("-l ./case/mix_operation_type_log/case" + str(flag).zfill(flaglen) + ".log\n")
+                                # file.write("-l ./mix_operation_type_log/case" + str(flag).zfill(flaglen) + ".log\n")
+                                file.write("+vcs+lic+wait\n")
                                 flag = flag + 1
 
 file = open("./case/multidb.sh", "w")
+file.write("rm -f ./multidb_log/*\n")
+file.write("rm -f ./multidb_wave/*\n")
+# file.write("#! /bin/csh\n")
 
 for ud_qp_num in [2]:
     for uc_qp_num in [2]:
@@ -210,13 +233,14 @@ for ud_qp_num in [2]:
                                     if (write_wqe_num != 0):
                                         continue
                             for sg_num in [1]:
-                                for data_count in [10, 313, 4, 8, 16]:
-                                    if (data_count == 10 or data_count == 313):
+                                for data_count in [10, 4, 8, 16]:
+                                    if (data_count == 10):
                                         data_unit = "B"
                                     else:
                                         data_unit = "KB"
-                                    file.write(output_exe + " -uvmDebug +UVM_VERBOSITY=UVM_LOW " + \
-                                        "+vpdfile+" + "./case/multidb_wave/wave" + str(flag).zfill(flaglen) + ".vpd " +\
+                                    file.write("bsub " + "-o " + "./multidb_log/bsublog" + str(flag).zfill(flaglen) + " " + output_exe + \
+                                        " -uvmDebug +UVM_VERBOSITY=UVM_LOW " + \
+                                        "+vpdfile+" + "./multidb_wave/wave" + str(flag).zfill(flaglen) + ".vpd " +\
                                         "+UVM_TESTNAME=" + test_name + \
                                         " +HOST_NUM=2 +PROC_NUM=2 ")
                                     file.write("+RC_QP_NUM=" + str(rc_qp_num) + " ")
@@ -230,14 +254,18 @@ for ud_qp_num in [2]:
                                     file.write("+SG_NUM=" + str(sg_num) + " ")
                                     file.write("+DATA_CNT=" + str(data_count) + " ")
                                     file.write("+DATA_UNIT=" + data_unit + " ")
-                                    file.write("-l ./case/multidb_log/case" + str(flag).zfill(flaglen) + ".log\n")
+                                    # file.write("-l ./multidb_log/case" + str(flag).zfill(flaglen) + ".log\n")
+                                    file.write("+vcs+lic+wait\n")
                                     flag = flag + 1
 
 file = open("./case/multiqp.sh", "w")
+file.write("rm -f ./multiqp_log/*\n")
+file.write("rm -f ./multiqp_wave/*\n")
+# file.write("#! /bin/csh\n")
 
-for ud_qp_num in [0, 16, 64, 128]:
-    for uc_qp_num in [0, 16, 64, 128]:
-        for rc_qp_num in [0, 16, 64, 128]:
+for ud_qp_num in [0, 16, 64, 256]:
+    for uc_qp_num in [0, 16, 64, 256]:
+        for rc_qp_num in [0, 16, 64, 256]:
             if (rc_qp_num == 0 and uc_qp_num == 0 and ud_qp_num == 0):
                 continue
             if (rc_qp_num + uc_qp_num + ud_qp_num > 8192):
@@ -260,8 +288,9 @@ for ud_qp_num in [0, 16, 64, 128]:
                                         data_unit = "B"
                                     else:
                                         data_unit = "KB"
-                                    file.write(output_exe + " -uvmDebug +UVM_VERBOSITY=UVM_LOW " + \
-                                        "+vpdfile+" + "./case/multiqp_wave/wave" + str(flag).zfill(flaglen) + ".vpd " +\
+                                    file.write("bsub " + "-o " + "./multidb_log/bsublog" + str(flag).zfill(flaglen) + " " + output_exe + \
+                                        " -uvmDebug +UVM_VERBOSITY=UVM_LOW " + \
+                                        "+vpdfile+" + "./multiqp_wave/wave" + str(flag).zfill(flaglen) + ".vpd " +\
                                         "+UVM_TESTNAME=" + test_name + \
                                         " +HOST_NUM=2 +PROC_NUM=2 ")
                                     file.write("+RC_QP_NUM=" + str(rc_qp_num) + " ")
@@ -275,5 +304,6 @@ for ud_qp_num in [0, 16, 64, 128]:
                                     file.write("+SG_NUM=" + str(sg_num) + " ")
                                     file.write("+DATA_CNT=" + str(data_count) + " ")
                                     file.write("+DATA_UNIT=" + data_unit + " ")
-                                    file.write("-l ./case/multiqp_log/case" + str(flag).zfill(flaglen) + ".log\n")
+                                    # file.write("-l ./multiqp_log/case" + str(flag).zfill(flaglen) + ".log\n")
+                                    file.write("+vcs+lic+wait\n")
                                     flag = flag + 1

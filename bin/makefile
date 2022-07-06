@@ -19,7 +19,7 @@ com:
 	-l compile.log \
 	-f filelist.f -o ${OUTPUT}
 
-debug_dve:
+debug:
 	./${OUTPUT} -uvmDebug +vpdfile+${VPDNAME} +UVM_VERDI_TRACE=HIER +UVM_VERBOSITY=UVM_LOW +UVM_TESTNAME=${TEST_NAME} \
 				+HOST_NUM=2 \
 				+PROC_NUM=2 \
@@ -34,7 +34,8 @@ debug_dve:
 				+READ_WQE_NUM=0 \
 				+SEND_WQE_NUM=0 \
 				+RECV_WQE_NUM=0 \
-				-l run.log
+				-l run.log \
+				-gui=dve
 				
 clean:
 	rm -rf ${OUTPUT} *.vpd stack.info* session.inter.vpd.tcl csrc DVEfiles *.fsdb novas* *.daidir ucli.key vc_hdrs.h verdiLog flex* inter*
