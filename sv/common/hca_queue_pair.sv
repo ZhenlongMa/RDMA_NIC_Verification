@@ -37,6 +37,12 @@ class hca_queue_pair extends uvm_object;
     int host_id;
     bit [10:0] proc_id;
 
+    bit [31:0] sq_byte_size;
+    bit [31:0] rq_byte_size;
+
+    bit [15:0] sq_desc_byte_size;
+    bit [15:0] rq_desc_byte_size;
+
     bool is_connect;
 
     // header: producer pointer, byte
@@ -109,7 +115,7 @@ class hca_queue_pair extends uvm_object;
         mpt remote_mpt;
         addr local_addr_offset;
         addr remote_addr_offset;
-        int queue_size = 512 * 1024;
+        // int queue_size = 512 * 1024;
         wqe_data_seg_unit data_seg_unit;
         mpt local_mpt_que_check[$];
         mpt remote_mpt_que_check[$];
@@ -196,22 +202,22 @@ class hca_queue_pair extends uvm_object;
             else begin // is not the last wqe
                 case (next_op_type)
                     WRITE: begin
-                        temp_wqe.next_seg.next_wqe = ((sq_header + desc_byte_len) % queue_size) >> 4;
+                        temp_wqe.next_seg.next_wqe = ((sq_header + desc_byte_len) % sq_byte_size) >> 4;
                         temp_wqe.next_seg.next_opcode = `VERBS_RDMA_WRITE;
                         temp_wqe.next_seg.next_wqe_size = sg_num + 2;
                     end
                     READ: begin
-                        temp_wqe.next_seg.next_wqe = ((sq_header + desc_byte_len) % queue_size) >> 4;
+                        temp_wqe.next_seg.next_wqe = ((sq_header + desc_byte_len) % sq_byte_size) >> 4;
                         temp_wqe.next_seg.next_opcode = `VERBS_RDMA_READ;
                         temp_wqe.next_seg.next_wqe_size = sg_num + 2;
                     end
                     SEND: begin
-                        temp_wqe.next_seg.next_wqe = ((sq_header + desc_byte_len) % queue_size) >> 4;
+                        temp_wqe.next_seg.next_wqe = ((sq_header + desc_byte_len) % sq_byte_size) >> 4;
                         temp_wqe.next_seg.next_opcode = `VERBS_SEND;
                         temp_wqe.next_seg.next_wqe_size = sg_num + 1;
                     end
                     RECV: begin
-                        temp_wqe.next_seg.next_wqe = ((qp.rq_header + desc_byte_len) % queue_size) >> 4;
+                        temp_wqe.next_seg.next_wqe = ((qp.rq_header + desc_byte_len) % rq_byte_size) >> 4;
                         temp_wqe.next_seg.next_wqe_size = sg_num + 2;
                     end
                     default: begin
@@ -432,7 +438,7 @@ class hca_queue_pair extends uvm_object;
         addr wqe_offset;
         bit [`DATA_WIDTH - 1 : 0] raw_data;
         wqe_data_seg_unit data_seg_unit;
-        int beat_num;
+        int sg_id;
         bit [10:0] proc_id;
         int host_id;
         hca_fifo #(.width(256)) data_fifo;
@@ -452,6 +458,8 @@ class hca_queue_pair extends uvm_object;
         end
 
         // write wqe
+        // WRITE/READ WQE:
+        // next_seg(16B) + raddr_seg(16B) + data_seg(16B x n)
         if (op_type == WRITE || op_type == READ) begin
             raw_data = 0;
             data_fifo.clean();
@@ -468,10 +476,10 @@ class hca_queue_pair extends uvm_object;
             };
             data_fifo.push(trans2comb(raw_data));
             raw_data = 0;
-            beat_num = 0;
+            sg_id = 0;
             while (temp_wqe.data_seg.size() != 0) begin
                 data_seg_unit = temp_wqe.data_seg.pop_front();
-                if (beat_num % 2 == 0) begin
+                if (sg_id % 2 == 0) begin
                     raw_data = 0;
                     raw_data[127:0] = {
                         data_seg_unit.addr,
@@ -486,14 +494,16 @@ class hca_queue_pair extends uvm_object;
                         data_seg_unit.byte_count
                     };
                 end
-                if (temp_wqe.data_seg.size() == 0 || beat_num % 2 == 1) begin
+                if (temp_wqe.data_seg.size() == 0 || sg_id % 2 == 1) begin
                     data_fifo.push(trans2comb(raw_data));
                 end
-                beat_num++;
+                sg_id++;
             end
             mem.write_block(base_paddr + wqe_offset, data_fifo, 32 + sg_num * 16);
         end
         else if (op_type == SEND) begin
+            // RC/UC SEND_WQE:
+            // next_seg(16B) + data_seg (16B x n)
             if (qp.ctx.flags[23:16] != `HGHCA_QP_ST_UD) begin // RC/UC
                 raw_data = 0;
                 data_fifo.clean();
@@ -503,10 +513,11 @@ class hca_queue_pair extends uvm_object;
                     temp_wqe.next_seg.next_ee, temp_wqe.next_seg.next_dbd, temp_wqe.next_seg.next_fence, temp_wqe.next_seg.next_wqe_size,
                     temp_wqe.next_seg.next_wqe, temp_wqe.next_seg.res_0, temp_wqe.next_seg.next_opcode
                 };
-                beat_num = 0;
+                sg_id = 0;
                 while (temp_wqe.data_seg.size() != 0) begin
                     data_seg_unit = temp_wqe.data_seg.pop_front();
-                    if (beat_num % 2 == 0) begin
+                    // 
+                    if (sg_id % 2 == 0) begin
                         raw_data[255:128] = {
                             data_seg_unit.addr,
                             data_seg_unit.lkey,
@@ -525,10 +536,12 @@ class hca_queue_pair extends uvm_object;
                             data_fifo.push(trans2comb(raw_data));
                         end
                     end
-                    beat_num++;
+                    sg_id++;
                 end
                 mem.write_block(base_paddr + wqe_offset, data_fifo, 16 + sg_num * 16);
             end
+            // UD SEND WQE:
+            // next_seg(16B) + ud_seg(48B) + data_seg(16B x n)
             else if (qp.ctx.flags[23:16] == `HGHCA_QP_ST_UD) begin
                 raw_data = 0;
                 data_fifo.clean();
@@ -542,7 +555,7 @@ class hca_queue_pair extends uvm_object;
                     temp_wqe.ud_seg.dmac[47:16],
                     temp_wqe.ud_seg.smac[47:16],
                     temp_wqe.ud_seg.dmac[15:0], temp_wqe.ud_seg.smac[15:0],
-                    96'b0, temp_wqe.ud_seg.port
+                    24'b0, temp_wqe.ud_seg.port
                 };
                 data_fifo.push(trans2comb(raw_data));
                 raw_data = {
@@ -556,10 +569,10 @@ class hca_queue_pair extends uvm_object;
                     temp_wqe.ud_seg.sip
                 };
                 data_fifo.push(trans2comb(raw_data));
-                beat_num = 0;
+                sg_id = 0;
                 while (temp_wqe.data_seg.size() != 0) begin
                     data_seg_unit = temp_wqe.data_seg.pop_front();
-                    if (beat_num % 2 == 0) begin
+                    if (sg_id % 2 == 0) begin
                         raw_data = 0;
                         raw_data[127:0] = {
                             data_seg_unit.addr,
@@ -574,108 +587,109 @@ class hca_queue_pair extends uvm_object;
                             data_seg_unit.byte_count
                         };
                     end
-                    if (temp_wqe.data_seg.size() == 0 || beat_num % 2 == 1) begin
+                    if (temp_wqe.data_seg.size() == 0 || sg_id % 2 == 1) begin
                         data_fifo.push(trans2comb(raw_data));
                     end
-                    beat_num++;
+                    sg_id++;
                 end
-                mem.write_block(base_paddr + wqe_offset, data_fifo, 32 + sg_num * 16);
+                mem.write_block(base_paddr + wqe_offset, data_fifo, 64 + sg_num * 16);
             end
         end
         else if (op_type == RECV) begin
-            if (qp.ctx.flags[23:16] != `HGHCA_QP_ST_UD) begin
-                raw_data = 0;
-                data_fifo.clean();
-                raw_data[127:0] = {
-                    temp_wqe.next_seg.imm_data,
-                    temp_wqe.next_seg.res_2, temp_wqe.next_seg.cq, temp_wqe.next_seg.evt, temp_wqe.next_seg.solicit, temp_wqe.next_seg.res_1,
-                    temp_wqe.next_seg.next_ee, temp_wqe.next_seg.next_dbd, temp_wqe.next_seg.next_fence, temp_wqe.next_seg.next_wqe_size,
-                    temp_wqe.next_seg.next_wqe, temp_wqe.next_seg.res_0, temp_wqe.next_seg.next_opcode
-                };
-                beat_num = 0;
-                while (temp_wqe.data_seg.size() != 0) begin
-                    data_seg_unit = temp_wqe.data_seg.pop_front();
-                    if (beat_num % 2 == 0) begin
-                        raw_data[255:128] = {
-                            data_seg_unit.addr,
-                            data_seg_unit.lkey,
-                            data_seg_unit.byte_count
-                        };
+            // RECV WQE:
+            // next_seg(16B) + data_seg(16B x n) + zero_seg(16B)
+            // if (qp.ctx.flags[23:16] != `HGHCA_QP_ST_UD) begin
+            raw_data = 0;
+            data_fifo.clean();
+            raw_data[127:0] = {
+                temp_wqe.next_seg.imm_data,
+                temp_wqe.next_seg.res_2, temp_wqe.next_seg.cq, temp_wqe.next_seg.evt, temp_wqe.next_seg.solicit, temp_wqe.next_seg.res_1,
+                temp_wqe.next_seg.next_ee, temp_wqe.next_seg.next_dbd, temp_wqe.next_seg.next_fence, temp_wqe.next_seg.next_wqe_size,
+                temp_wqe.next_seg.next_wqe, temp_wqe.next_seg.res_0, temp_wqe.next_seg.next_opcode
+            };
+            sg_id = 0;
+            while (temp_wqe.data_seg.size() != 0) begin
+                data_seg_unit = temp_wqe.data_seg.pop_front();
+                if (sg_id % 2 == 0) begin
+                    raw_data[255:128] = {
+                        data_seg_unit.addr,
+                        data_seg_unit.lkey,
+                        data_seg_unit.byte_count
+                    };
+                    data_fifo.push(trans2comb(raw_data));
+                    if (temp_wqe.data_seg.size() == 0) begin
+                        raw_data = 0;
+                        raw_data[127:0] = temp_wqe.zero_seg.zero;
                         data_fifo.push(trans2comb(raw_data));
                     end
-                    else begin
-                        raw_data = 0;
-                        raw_data[127:0] = {
-                            data_seg_unit.addr,
-                            data_seg_unit.lkey,
-                            data_seg_unit.byte_count
-                        };
-                        if (temp_wqe.data_seg.size() != 0) begin
-                            data_fifo.push(trans2comb(raw_data));
-                        end
-                    end
-                    beat_num++;
                 end
-                raw_data = 0;
-                raw_data[127:0] = temp_wqe.zero_seg.zero;
-                data_fifo.push(trans2comb(raw_data));
-                mem.write_block(base_paddr + wqe_offset, data_fifo, 32 + sg_num * 16);
-            end
-            else if (qp.ctx.flags[23:16] == `HGHCA_QP_ST_UD) begin
-                raw_data = 0;
-                data_fifo.clean();
-                raw_data[127:0] = {
-                    temp_wqe.next_seg.imm_data,
-                    temp_wqe.next_seg.res_2, temp_wqe.next_seg.cq, temp_wqe.next_seg.evt, temp_wqe.next_seg.solicit, temp_wqe.next_seg.res_1,
-                    temp_wqe.next_seg.next_ee, temp_wqe.next_seg.next_dbd, temp_wqe.next_seg.next_fence, temp_wqe.next_seg.next_wqe_size,
-                    temp_wqe.next_seg.next_wqe, temp_wqe.next_seg.res_0, temp_wqe.next_seg.next_opcode
-                };
-                raw_data[255:128] = {
-                    temp_wqe.ud_seg.dmac[47:16],
-                    temp_wqe.ud_seg.smac[47:16],
-                    temp_wqe.ud_seg.dmac[15:0], temp_wqe.ud_seg.smac[15:0],
-                    96'b0, temp_wqe.ud_seg.port
-                };
-                data_fifo.push(trans2comb(raw_data));
-                raw_data = {
-                    32'b0,
-                    32'b0,
-                    temp_wqe.ud_seg.qkey,
-                    temp_wqe.ud_seg.dqpn,
-                    32'b0,
-                    32'b0,
-                    temp_wqe.ud_seg.dip,
-                    temp_wqe.ud_seg.sip
-                };
-                data_fifo.push(trans2comb(raw_data));
-                beat_num = 0;
-                while (temp_wqe.data_seg.size() != 0) begin
-                    data_seg_unit = temp_wqe.data_seg.pop_front();
-                    if (beat_num % 2 == 0) begin
-                        raw_data = 0;
-                        raw_data[127:0] = {
-                            data_seg_unit.addr,
-                            data_seg_unit.lkey,
-                            data_seg_unit.byte_count
-                        };
-                    end
-                    else begin
-                        raw_data[255:128] = {
-                            data_seg_unit.addr,
-                            data_seg_unit.lkey,
-                            data_seg_unit.byte_count
-                        };
-                    end
-                    if (temp_wqe.data_seg.size() == 0 || beat_num % 2 == 1) begin
+                else begin
+                    raw_data = 0;
+                    raw_data[127:0] = {
+                        data_seg_unit.addr,
+                        data_seg_unit.lkey,
+                        data_seg_unit.byte_count
+                    };
+                    if (temp_wqe.data_seg.size() == 0) begin
+                        raw_data[255:128] = temp_wqe.zero_seg.zero;
                         data_fifo.push(trans2comb(raw_data));
                     end
-                    beat_num++;
                 end
-                raw_data = 0;
-                raw_data[127:0] = temp_wqe.zero_seg.zero;
-                data_fifo.push(trans2comb(raw_data));
-                mem.write_block(base_paddr + wqe_offset, data_fifo, 48 + sg_num * 16);
+                sg_id++;
             end
+            if (sg_id != sg_num) begin
+                `uvm_fatal("SG_NUM_ERROR", $sformatf("RECV sg_id: %0d, sg_num: %0d", sg_id, sg_num));
+            end
+            mem.write_block(base_paddr + wqe_offset, data_fifo, 32 + sg_num * 16);
+            // end
+            // // UD RECV WQE:
+            // // next_seg(16B) + data_seg(16B x n) + zero_seg(16B)
+            // else if (qp.ctx.flags[23:16] == `HGHCA_QP_ST_UD) begin
+            //     raw_data = 0;
+            //     data_fifo.clean();
+            //     raw_data[127:0] = {
+            //         temp_wqe.next_seg.imm_data,
+            //         temp_wqe.next_seg.res_2, temp_wqe.next_seg.cq, temp_wqe.next_seg.evt, temp_wqe.next_seg.solicit, temp_wqe.next_seg.res_1,
+            //         temp_wqe.next_seg.next_ee, temp_wqe.next_seg.next_dbd, temp_wqe.next_seg.next_fence, temp_wqe.next_seg.next_wqe_size,
+            //         temp_wqe.next_seg.next_wqe, temp_wqe.next_seg.res_0, temp_wqe.next_seg.next_opcode
+            //     };
+            //     sg_id = 0;
+            //     while (temp_wqe.data_seg.size() != 0) begin
+            //         data_seg_unit = temp_wqe.data_seg.pop_front();
+            //         if (sg_id % 2 == 0) begin
+            //             raw_data[255:128] = {
+            //                 data_seg_unit.addr,
+            //                 data_seg_unit.lkey,
+            //                 data_seg_unit.byte_count
+            //             };
+            //             data_fifo.push(trans2comb(raw_data));
+            //             if (temp_wqe.data_seg.size() == 0) begin
+            //                 // write zero seg
+            //                 raw_data = 0;
+            //                 raw_data[127:0] = temp_wqe.zero_seg.zero;
+            //                 data_fifo.push(trans2comb(raw_data));
+            //             end
+            //         end
+            //         else begin
+            //             raw_data = 0;
+            //             raw_data[127:0] = {
+            //                 data_seg_unit.addr,
+            //                 data_seg_unit.lkey,
+            //                 data_seg_unit.byte_count
+            //             };
+            //             // fix here!!!
+            //             if (temp_wqe.data_seg.size() == 0) begin
+            //                 raw_data[255:128] = temp_wqe.zero_seg.zero;
+            //                 data_fifo.push(trans2comb(raw_data));
+            //             end
+            //         end
+            //         sg_id++;
+            //     end
+            //     if (sg_id != sg_num) begin
+            //         `uvm_fatal("SG_NUM_ERROR", $sformatf("UD RECV sg_id: %0d, sg_num: %0d", sg_id, sg_num));
+            //     end
+            //     mem.write_block(base_paddr + wqe_offset, data_fifo, 32 + sg_num * 16);
+            // end
         end
         `uvm_info("MEM_INFO", $sformatf("write wqe finished, host_id: %h, addr: %h, op_type: %h", qp.host_id, base_paddr + wqe_offset, op_type), UVM_LOW);
     endtask: write_wqe_to_mem
@@ -697,6 +711,7 @@ class hca_queue_pair extends uvm_object;
     //------------------------------------------------------------------------------
     // function name : consume_wqe
     // function      : update tail pointer, 0: SQ, 1: RQ
+    //                 RQ is not supported because of prefetch
     // invoked       : by user
     //------------------------------------------------------------------------------
     function consume_wqe(bit queue);
@@ -706,19 +721,23 @@ class hca_queue_pair extends uvm_object;
         if (queue == 0) begin
             desc_byte_len[ctx.sq_entry_sz_log] = 1'b1;
             sq_tail = sq_tail + desc_byte_len;
-            `uvm_info("QP_NOTICE", $sformatf("consume SQ WQE, qpn: %h, sq_tail: %h, sq_header: %h", ctx.local_qpn, sq_tail, sq_header), UVM_LOW);
+            `uvm_info("QP_NOTICE", $sformatf("consume SQ WQE, qpn: %h, host_id: %h, sq_tail: %h, sq_header: %h, descriptor size: %h", 
+                ctx.local_qpn, host_id, sq_tail, sq_header, desc_byte_len), UVM_LOW
+            );
             if (sq_tail > sq_header) begin
-                `uvm_fatal("QUE_ERR", $sformatf("sq_tail exceeds sq_header! qpn: %h, sq_tail: %h, sq_header: %h", ctx.local_qpn, sq_tail, sq_header));
+                `uvm_fatal("QUE_ERR", $sformatf("sq_tail exceeds sq_header! qpn: %h, host_id: %h, sq_tail: %h, sq_header: %h", 
+                    ctx.local_qpn, host_id, sq_tail, sq_header)
+                );
             end
         end
-        else begin
-            desc_byte_len[ctx.rq_entry_sz_log] = 1'b1;
-            rq_tail = rq_tail + desc_byte_len;
-            `uvm_info("QP_NOTICE", $sformatf("consume RQ WQE, qpn: %h, rq_tail: %h, rq_header: %h", ctx.local_qpn, rq_tail, rq_header), UVM_LOW);
-            if (rq_tail > rq_header) begin
-                `uvm_fatal("QUE_ERR", $sformatf("rq_tail exceeds rq_header! qpn: %h, rq_tail: %h, rq_header: %h", ctx.local_qpn, rq_tail, rq_header));
-            end
-        end
+        // else begin
+        //     desc_byte_len[ctx.rq_entry_sz_log] = 1'b1;
+        //     rq_tail = rq_tail + desc_byte_len;
+        //     `uvm_info("QP_NOTICE", $sformatf("consume RQ WQE, qpn: %h, rq_tail: %h, rq_header: %h", ctx.local_qpn, rq_tail, rq_header), UVM_LOW);
+        //     if (rq_tail > rq_header) begin
+        //         `uvm_fatal("QUE_ERR", $sformatf("rq_tail exceeds rq_header! qpn: %h, rq_tail: %h, rq_header: %h", ctx.local_qpn, rq_tail, rq_header));
+        //     end
+        // end
     endfunction: consume_wqe
 endclass: hca_queue_pair
 `endif

@@ -32,6 +32,12 @@
 `define RQ_WQE_BYTE_LEN                 128
 `define SQ_WQE_BYTE_LEN                 128
 
+`define QPC_MTU_256                     3'h1
+`define QPC_MTU_512                     3'h2
+`define QPC_MTU_1024                    3'h3
+`define QPC_MTU_2048                    3'h4
+`define QPC_MTU_4096                    3'h5
+
 /* This signal indicates the (max payload size & max read request size) 
 *  agreed in the communication
 * 3'b000 -- 128 B
@@ -317,7 +323,7 @@ typedef struct {
 
 typedef struct {
     bit [127    : 0] zero;
-} wqe_zero_seg;
+} wqe_zero_seg; // used in RECV WQE
 
 typedef struct {
     bit [31     : 0] port;

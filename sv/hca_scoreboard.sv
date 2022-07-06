@@ -215,8 +215,8 @@ class hca_scoreboard extends uvm_scoreboard;
         while (src_data_fifo.get_depth() != 0) begin
             src_data = src_data_fifo.pop();
             dst_data = dst_data_fifo.pop();
-            `uvm_info("CHECK_INFO", $sformatf("src_host_id: %h, src_addr: %h, src_data: %h, dst_host_id: %h, dst_addr: %h, dst_data: %h ", 
-                src_host_id, src_addr + offset, src_data, dst_host_id, dst_addr + offset, dst_data), UVM_LOW);
+            `uvm_info("CHECK_INFO", $sformatf("src_host_id: %h, src_addr: %h, src_data: %h, dst_host_id: %h, dst_addr: %h, dst_data: %h, length: %d ",
+                src_host_id, src_addr + offset, src_data, dst_host_id, dst_addr + offset, dst_data, length), UVM_LOW);
             offset = offset + fifo_width;
             if (src_data != dst_data) begin
                 return 0;
