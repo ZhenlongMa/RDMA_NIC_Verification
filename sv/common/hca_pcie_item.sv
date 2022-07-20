@@ -358,7 +358,7 @@ class hca_pcie_item extends uvm_sequence_item;
         // }
         // else if (hcr_op == `CMD_HW2SW_MPT)
         // {
-            
+
         // }
         else if (hcr_op == `CMD_SW2HW_MPT)
         {

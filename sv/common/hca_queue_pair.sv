@@ -91,11 +91,11 @@ class hca_queue_pair extends uvm_object;
 
     //------------------------------------------------------------------------------
     // task name     : put_wqe
-    // function      : create wqes of one doorbell and deliver them to 
-    //                 both memory and q_list. 
+    // function      : create wqes of one doorbell and deliver them to both memory 
+    //                 and q_list. 
     //                 If operation type is RECEIVE, this task puts WQEs to RQ of 
     //                 the remote QP.
-    // invoked       : by create_and_write_wqes
+    // invoked       : by create_and_write_wqes in test_direct_param
     //------------------------------------------------------------------------------
     task put_wqe(
         e_op_type op_que[$], // opcode of each WQE
@@ -298,6 +298,16 @@ class hca_queue_pair extends uvm_object;
 
             // send source address, destination address and length to scoreboard, no need for SEND
             if (op_type != SEND) begin
+                // mpt local_mpt_que_check_copy[$];
+                mpt remote_mpt_que_check_copy[$];
+                // addr local_addr_offset_que_check_copy[$];
+                addr remote_addr_offset_que_check_copy[$];
+                for (int data_seg_id = 0; data_seg_id < sg_num; data_seg_id++) begin
+                    // local_mpt_que_check_copy.push_back(local_mpt_que_check.pop_front());
+                    remote_mpt_que_check_copy.push_back(remote_mpt_que_check.pop_front());
+                    // local_addr_offset_que_check_copy.push_back(local_addr_offset_que_check.pop_front());
+                    remote_addr_offset_que_check_copy.push_back(remote_addr_offset_que_check.pop_front());
+                end
                 send_mem_check(
                     host_id, 
                     remote_host_id, 
@@ -305,10 +315,10 @@ class hca_queue_pair extends uvm_object;
                     remote_qp.proc_id, 
                     temp_wqe, 
                     op_type, 
-                    local_mpt_que_check, 
-                    remote_mpt_que_check, 
-                    local_addr_offset_que_check,
-                    remote_addr_offset_que_check,
+                    // local_mpt_que_check_copy, 
+                    remote_mpt_que_check_copy, 
+                    // local_addr_offset_que_check_copy,
+                    remote_addr_offset_que_check_copy,
                     check_list
                 );
             end
@@ -349,6 +359,12 @@ class hca_queue_pair extends uvm_object;
         `uvm_info("NOTICE", "send_ref_cqe finished!", UVM_LOW);
     endtask: send_ref_cqe
 
+    //-----------------------------------------------------------------------------------
+    // task name     : send_mem_check
+    // function      : put memory check information of every single WQE into check_list, 
+    //                 which will be used by scoreboard.
+    // invoked       : by put_wqe
+    //-----------------------------------------------------------------------------------
     task send_mem_check(
         int host_id,
         int remote_host_id,
@@ -356,9 +372,9 @@ class hca_queue_pair extends uvm_object;
         bit [10:0] remote_proc_id,
         wqe input_wqe,
         e_op_type op_type,
-        mpt recv_dst_mpt_que[$],
+        // mpt recv_dst_mpt_que[$],
         mpt recv_src_mpt_que[$],
-        addr recv_dst_addr_offset_que[$],
+        // addr recv_dst_addr_offset_que[$],
         addr recv_src_addr_offset_que[$],
         hca_check_mem_list check_list
     );

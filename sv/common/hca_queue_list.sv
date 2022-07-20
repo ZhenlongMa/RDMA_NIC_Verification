@@ -55,5 +55,14 @@ class hca_queue_list extends uvm_object;
         end
         `uvm_fatal("GET_QP_ERR", $sformatf("Get QP error! qpn: %h", qpn));
     endfunction: get_qp
+
+    function hca_comp_queue get_cq(int host_id, bit [31:0] cqn);
+        for (int i = 0; i < cq_list[host_id].size(); i++) begin
+            if (cqn == cq_list[host_id][i].ctx.cqn) begin
+                return cq_list[host_id][i];
+            end
+        end
+        `uvm_fatal("GET_CQ_ERR", $sformatf("Get CQ error! cqn: %h", cqn));
+    endfunction: get_cq
 endclass: hca_queue_list
 `endif

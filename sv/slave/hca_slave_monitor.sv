@@ -140,7 +140,10 @@ class hca_slave_monitor extends uvm_monitor;
                     received_item.rq_last_be                = vif.s_axis_rq_tuser[7:4];
                 end
                 else if (vif.s_axis_rq_tdata[78:75] == `PCIE_MEM_WR) begin
-                    `uvm_info("NOTICE", $sformatf("received dma write request! addr: %h", {vif.s_axis_rq_tdata[63:2], 2'b0}), UVM_LOW);
+                    `uvm_info("NOTICE", $sformatf("received dma write request! addr: %h, dw count: %h, first be: %h, last be: %h", 
+                        {vif.s_axis_rq_tdata[63:2], 2'b0}, vif.s_axis_rq_tdata[74:64], vif.s_axis_rq_tuser[3:0], 
+                        vif.s_axis_rq_tuser[7:4]), UVM_LOW
+                    );
                     beat_num                                = 0;
                     received_dw_num                         = 0;
                     received_item.item_type                 = DMA_WR;
@@ -221,7 +224,7 @@ class hca_slave_monitor extends uvm_monitor;
                     end
                 end
                 else begin
-                    `uvm_fatal("RQ ERROR",{"RQ type error: ",get_full_name()});
+                    `uvm_fatal("RQ ERROR", $sformatf("RQ type error， rq_tdata: %h", vif.s_axis_rq_tdata));
                 end
 
                 // send received item to slave sequence

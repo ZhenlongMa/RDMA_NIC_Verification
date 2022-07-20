@@ -236,16 +236,66 @@ class hca_scoreboard extends uvm_scoreboard;
     function bit check_cqe(hca_pcie_item cqe_item, int host_id);
         cqe cqe;
         bit [255:0] temp_data;
+        bit [31:0] cqn;
+        hca_comp_queue cq;
+        hca_queue_pair qp;
+
+        cqn = {19'b0, cqe_item.rq_addr[32:20]};
+
+        // check if error CQE
         temp_data       = cqe_item.data_payload.pop_front();
         cqe.my_qpn      = temp_data[31:0];
+        cqe.rqpn        = temp_data[95:64];
         cqe.syndrome    = temp_data[135:128];
         cqe.vender_err  = temp_data[143:136];
         cqe.db_cnt      = temp_data[159:144];
         cqe.wqe         = temp_data[223:192];
         cqe.opcode      = temp_data[231:224];
+        cqe.is_send     = temp_data[239:232];
         cqe.owner       = temp_data[255:248];
-        if (cqe.opcode == 8'hff) begin
-            `uvm_fatal("CQE_ERR", $sformatf("CQE error! host_id: %h, QP number: %h, syndrome: %h", host_id, cqe.my_qpn, cqe.syndrome));
+        if (cqe.is_send == 1) begin
+            if (cqe.opcode != 8'h00 &&
+                cqe.opcode != 8'h08 &&
+                cqe.opcode != 8'h09 &&
+                cqe.opcode != 8'h0a &&
+                cqe.opcode != 8'h0b &&
+                cqe.opcode != 8'h10 &&
+                cqe.opcode != 8'h11 &&
+                cqe.opcode != 8'h12 &&
+                cqe.opcode != 8'h18) begin
+                `uvm_fatal("CQE_ERR", $sformatf("send CQE error! host_id: %h, QP number: %h, syndrome: %h, opcode: %h", host_id, cqe.my_qpn, cqe.syndrome, cqe.opcode));
+            end
+        end
+        else begin
+            if (cqe.opcode != 8'h02 &&
+                cqe.opcode != 8'h03 &&
+                cqe.opcode != 8'h04 &&
+                cqe.opcode != 8'h05 &&
+                cqe.opcode != 8'h09 &&
+                cqe.opcode != 8'h0b) begin
+                `uvm_fatal("CQE_ERR", $sformatf("recv CQE error! host_id: %h, QP number: %h, syndrome: %h, opcode: %h", host_id, cqe.my_qpn, cqe.syndrome, cqe.opcode));
+            end
+       end
+
+        cq = q_list.get_cq(host_id, cqn);
+        // if (cq.header % (32 * (2 ** cq.ctx.logsize)) == {44'b0, cqe_item.rq_addr[19:0]}) begin
+        //     cq.header += 32;
+        // end
+        // else begin
+        //     `uvm_fatal("CQE_ERR", $sformatf("CQE address error! host_id: %h, cqn: %h, header: %h, addr: %h", host_id, cqn, cq.header, cqe_item.rq_addr));
+        // end
+        
+        // check cqn
+        qp = q_list.get_qp(host_id, cqe.my_qpn);
+        if (cqe.is_send == 1) begin
+            if (qp.ctx.cqn_snd != cqn) begin
+                `uvm_fatal("CQE_ERR", $sformatf("send CQ number mismatch! qp.ctx.cqn_snd: %h, addr_cqn: %h, CQ context CQN: %h", qp.ctx.cqn_snd, cqn, cq.ctx.cqn));
+            end
+        end
+        else begin
+            if (qp.ctx.cqn_rcv != cqn) begin
+                `uvm_fatal("CQE_ERR", $sformatf("recv CQ number mismatch! qp.ctx.cqn_rcv: %h, addr_cqn: %h, CQ context CQN: %h", qp.ctx.cqn_rcv, cqn, cq.ctx.cqn));
+            end
         end
     endfunction: check_cqe
 

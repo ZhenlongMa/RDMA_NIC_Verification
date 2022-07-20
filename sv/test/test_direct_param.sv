@@ -519,11 +519,6 @@ class test_direct_param extends uvm_test;
         addr sq_remote_offset_que[$];
         addr rq_send_offset_que[$];
         addr rq_recv_offset_que[$];
-        // addr local_paddr;
-        // addr local_vaddr;
-        // addr remote_vaddr;
-        // addr remote_paddr;
-        // e_op_type op_type;
         e_op_type sq_op_que[$];
         e_op_type rq_op_que[$];
         hca_queue_pair remote_qp;
@@ -555,14 +550,13 @@ class test_direct_param extends uvm_test;
         // UD:
         // |    SEND    |  RECEIVE  |
         ------------------------------------------------------------------*/
-        // create data memory regions
+        // create data memory regions and put WQEs into mpt queue
         for (int wqe_id = 0; wqe_id < send_wqe_num + recv_wqe_num + write_wqe_num + read_wqe_num; wqe_id++) begin
             if (wqe_id < send_wqe_num) begin // SEND
                 // start physical address of THIS DOORBELL
                 addr src_paddr = `PA_DATA(proc_id, qp.ctx.local_qpn) + db_id * this.wqe_num * wqe_data_count; 
                 addr src_vaddr = `VA(src_paddr);
                 // start physical address of RECV buffer corresponding to SEND above
-                // addr dst_paddr = `PA_DATA(proc_id, qp.ctx.remote_qpn) + `DATA_RECV_BUFF_GAP + send_wqe_num * wqe_data_count;
                 addr dst_paddr = `PA_DATA(proc_id, qp.ctx.remote_qpn) + `DATA_RECV_BUFF_GAP + db_id * this.wqe_num * wqe_data_count;
                 addr dst_vaddr = `VA(dst_paddr);
                 for (int sg_id = 0; sg_id < sg_num; sg_id++) begin
@@ -607,13 +601,9 @@ class test_direct_param extends uvm_test;
             end
             else if (wqe_id < send_wqe_num + recv_wqe_num + write_wqe_num) begin // WRITE
                 // start physical address of WRITE source data
-                // addr src_paddr = `PA_DATA(proc_id, qp.ctx.local_qpn) + send_wqe_num * wqe_data_count + recv_wqe_num * wqe_data_count; 
-                // addr src_vaddr = `VA(src_paddr);
                 addr src_paddr = `PA_DATA(proc_id, qp.ctx.local_qpn) + db_id * this.wqe_num * wqe_data_count;
                 addr src_vaddr = `VA(src_paddr);
                 // start physical address of WRITE buffer in receiver side
-                // addr dst_paddr = `PA_DATA(proc_id, qp.ctx.remote_qpn) + `DATA_RECV_BUFF_GAP + send_wqe_num * wqe_data_count + recv_wqe_num * wqe_data_count;
-                // addr dst_vaddr = `VA(dst_paddr);
                 addr dst_paddr = `PA_DATA(proc_id, qp.ctx.remote_qpn) + `DATA_RECV_BUFF_GAP + db_id * this.wqe_num * wqe_data_count;
                 addr dst_vaddr = `VA(dst_paddr);
 
@@ -652,17 +642,9 @@ class test_direct_param extends uvm_test;
             end
             else if (wqe_id < send_wqe_num + recv_wqe_num + write_wqe_num + read_wqe_num) begin // READ
                 // start physical address of READ source data
-                // addr src_paddr = `PA_DATA(proc_id, qp.ctx.remote_qpn) + 
-                //                  send_wqe_num * wqe_data_count + 
-                //                  recv_wqe_num * wqe_data_count + 
-                //                  write_wqe_num * wqe_data_count;
                 addr src_paddr = `PA_DATA(proc_id, qp.ctx.remote_qpn) + db_id * this.wqe_num * wqe_data_count;
                 addr src_vaddr = `VA(src_paddr);
                 // start physical address of READ buffer
-                // addr dst_paddr = `PA_DATA(proc_id, qp.ctx.local_qpn) + `DATA_RECV_BUFF_GAP + 
-                //                  send_wqe_num * wqe_data_count + 
-                //                  recv_wqe_num * wqe_data_count + 
-                //                  write_wqe_num * wqe_data_count;
                 addr dst_paddr = `PA_DATA(proc_id, qp.ctx.local_qpn) + `DATA_RECV_BUFF_GAP + db_id * this.wqe_num * wqe_data_count;
                 addr dst_vaddr = `VA(dst_paddr);
 
@@ -705,7 +687,7 @@ class test_direct_param extends uvm_test;
             end
         end
         `uvm_info("INIT_INFO", $sformatf("data memory region created! QP number: %h.", qp.ctx.local_qpn), UVM_LOW);
-        // put SQ WQE
+        // put SQ WQEs
         qp.put_wqe(
             sq_op_que,
             sq_local_mpt_que,
@@ -717,7 +699,7 @@ class test_direct_param extends uvm_test;
             sg_num,
             sg_entry_data_count
         );
-        // put RQ WQE
+        // put RQ WQEs
         remote_qp.put_wqe(
             rq_op_que,
             rq_recv_mpt_que,

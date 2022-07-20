@@ -109,14 +109,6 @@ class hca_slave_sequence extends uvm_sequence #(hca_pcie_item);
     virtual task body();
         while (1) begin
             hca_pcie_item received_item;
-            // @ (posedge v_if.pcie_clk);
-            // if (p_sequencer.item_collected_fifo.is_empty() != 0) begin
-            //     continue;
-            // end
-            // if (stop == 1) begin
-            //     $stop;
-            //     stop = 0;
-            // end
             `uvm_info("NOTICE", $sformatf("fifo used: %0d", p_sequencer.item_collected_fifo.used()), UVM_HIGH);
             p_sequencer.item_collected_fifo.get(received_item);
             if (received_item.item_type == GLOBAL_STOP) begin

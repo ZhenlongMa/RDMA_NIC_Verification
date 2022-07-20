@@ -30,8 +30,8 @@ for ud_qp_num in [0, 2]:
                                 if (write_wqe_num != 0):
                                     continue
                         for sg_num in range(1, 7):
-                            for data_count in [10, 313, 4, 8, 16, 32]:
-                                if (data_count == 10 or data_count == 313):
+                            for data_count in [10, 313, 1453, 4, 8, 16]:
+                                if (data_count !=4 and data_count != 8 and data_count != 16):
                                     data_unit = "B"
                                 else:
                                     data_unit = "KB"
