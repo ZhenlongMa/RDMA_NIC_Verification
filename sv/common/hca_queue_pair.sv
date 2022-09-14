@@ -212,9 +212,16 @@ class hca_queue_pair extends uvm_object;
                         temp_wqe.next_seg.next_wqe_size = sg_num + 2;
                     end
                     SEND: begin
-                        temp_wqe.next_seg.next_wqe = ((sq_header + desc_byte_len) % sq_byte_size) >> 4;
-                        temp_wqe.next_seg.next_opcode = `VERBS_SEND;
-                        temp_wqe.next_seg.next_wqe_size = sg_num + 1;
+                        if (qp.ctx.flags[23:16] == `HGHCA_QP_ST_UD) begin
+                            temp_wqe.next_seg.next_wqe = ((sq_header + desc_byte_len) % sq_byte_size) >> 4;
+                            temp_wqe.next_seg.next_opcode = `VERBS_SEND;
+                            temp_wqe.next_seg.next_wqe_size = sg_num + 4;
+                        end
+                        else begin
+                            temp_wqe.next_seg.next_wqe = ((sq_header + desc_byte_len) % sq_byte_size) >> 4;
+                            temp_wqe.next_seg.next_opcode = `VERBS_SEND;
+                            temp_wqe.next_seg.next_wqe_size = sg_num + 1;
+                        end
                     end
                     RECV: begin
                         temp_wqe.next_seg.next_wqe = ((qp.rq_header + desc_byte_len) % rq_byte_size) >> 4;

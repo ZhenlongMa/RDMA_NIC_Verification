@@ -225,7 +225,6 @@ class hca_config_agent extends uvm_object;
             `uvm_fatal("RANDOMIZE_ERROR", "randomize error in modify qp!");
         end
         vseq.cfg_mbx[host_id].try_put(modify_qp_item);
-        // qp_ctx_list[0].push_back(qp_ctx);
     endtask: modify_qp
 
     //------------------------------------------------------------------------------
@@ -256,7 +255,6 @@ class hca_config_agent extends uvm_object;
         if (vseq.cfg_mbx[host_id].try_put(sw2hw_cq_item) == 0) begin
             `uvm_fatal("TRY_PUT_ERROR", "try_put failed in sw2hw_cq in config_agent!");
         end;
-        // cq_ctx_list[0].push_back(cq_ctx);
     endtask: sw2hw_cq
 
     // phys addr must be 4K aligned!!!!
@@ -275,18 +273,8 @@ class hca_config_agent extends uvm_object;
             `uvm_fatal("WRITE_MTT_ERR", "maximum page num exceeded!");
         end
         // calculate start index
-        // if (temp == 0) begin
-            temp_index = mem_info.mem_table[host_id].size();
-        // end
-        // else if (temp == 1) begin
-        //     temp_index = 10000;
-        // end
-        // else if (temp == 2) begin
-        //     temp_index = 20000;
-        //     `uvm_info("MTT_NOTICE", "write mtt, temp index is 20000!", UVM_LOW);
-        // end
+        temp_index = mem_info.mem_table[host_id].size();
 
-        
         // send write mtt pcie item to sequence
         write_mtt_item.mtt_item.start_index = temp_index;
         phys_addr_pcie = phys_addr;

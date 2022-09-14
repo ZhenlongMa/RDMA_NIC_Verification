@@ -92,6 +92,8 @@
 
 `define DATA_BASE                       `ADDR_WIDTH'h8000_0000_0000_0000
 
+`define MSIX_ITR_VEC_BASE               `ADDR_WIDTH'h0000_0000_0000_5400
+
 ////////////////////////////////////////////////////////////
 // type
 ////////////////////////////////////////////////////////////
@@ -115,7 +117,7 @@
 `define     MAX_PROC_NUM                2048
 `define     MAX_QP_NUM                  16384
 `define     MAX_DB_NUM                  30
-`define     MAX_WQE_NUM                 30
+`define     MAX_WQE_NUM                 4096
 `define     MAX_PAGE_NUM                1024
 
 ////////////////////////////////////////////////////////////

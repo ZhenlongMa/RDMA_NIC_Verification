@@ -47,7 +47,7 @@ typedef enum {  MEM_RD            = 4'b0000,
                 RESERVED          = 4'b1111} e_req_type;
 
 // typedef enum {CQ, CC, RQ, RC, BASE_REG, RAM_DATA} e_item_type;
-typedef enum {INIT, HCR, DOORBELL, DMA_RD, DMA_WR, DMA_RSP, BATCH, GLOBAL_STOP} e_item_type;
+typedef enum {INIT, HCR, DOORBELL, DMA_RD, DMA_WR, DMA_RSP, BATCH, INTR, GLOBAL_STOP} e_item_type;
 
 import uvm_pkg::*;
 //----------------------------------------------------------------------------

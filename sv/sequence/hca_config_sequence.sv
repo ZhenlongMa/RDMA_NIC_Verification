@@ -66,16 +66,9 @@ class hca_config_sequence extends uvm_sequence #(hca_pcie_item);
     //------------------------------------------------------------------------------
     virtual task pre_body();
         // get case name
-        // if (!$value$plusargs("HCA_CASE_NAME=%s", seq_name)) begin
-        //     `uvm_warning("hca_config_sequence", "HCA_CASE_NAME not get!")
-        // end
-        // `uvm_info("PARAM_INFO", $sformatf("uvm_config_db get waiting! full name: %s.", get_full_name()), UVM_LOW);
         if(!uvm_config_db#(mailbox)::get(null, get_full_name(), "mbx_cmd_done", cmd_done)) begin
             `uvm_fatal("NO_MBX", $sformatf("mailbox not get in config_sequence! full name: %s, m_sequencer: %s.", get_full_name(), m_sequencer.get_full_name()));
         end
-        // else begin
-        //     `uvm_info("PARAM_INFO", $sformatf("uvm_config_db get succeed! full name: %s.", get_full_name()), UVM_LOW);
-        // end
     endtask: pre_body
 
     //------------------------------------------------------------------------------
@@ -105,15 +98,14 @@ class hca_config_sequence extends uvm_sequence #(hca_pcie_item);
                 `uvm_info("ITEM_INFO", "GLOBAL_STOP item received by config sequence!", UVM_LOW);
                 finish_item(cfg_item);
             end
+            else if (cfg_item.item_type == INTR) begin
+                `uvm_info("ITEM_INFO", "INTR item received by config sequence!", UVM_LOW);
+                finish_item(cfg_item);
+
+            end
             else begin
                 `uvm_fatal("ITEM_TYP_ERR", $sformatf("Illegal cfg_item type! item_type: %h.", cfg_item.item_type));
             end
-            // if (cmd_result == 1) begin
-            //     `uvm_info("NOTICE", "cmd_result get 1!", UVM_LOW);
-            // end
-            // else begin
-            //     `uvm_info("NOTICE", "cmd_result get 0!", UVM_LOW);
-            // end
         end
         `uvm_info("NOTICE", "cfg_item finished in config_sequence!", UVM_LOW);
     endtask: body
@@ -167,20 +159,17 @@ class hca_config_sequence extends uvm_sequence #(hca_pcie_item);
                 end
 
                 temp = temp_item.icm_addr_map.virt.pop_front();
-                // `uvm_info("NOTICE", $sformatf("temp in config sequence: %h", temp), UVM_LOW);
                 for (int i = 0; i < 8; i++) begin
                     inbox_data[i + 16] = temp[63 - i * 8 -: 8];
                 end
 
                 temp = temp_item.icm_addr_map.page.pop_front();
-                // `uvm_info("NOTICE", $sformatf("temp in config sequence: %h", temp), UVM_LOW);
                 for (int i = 0; i < 6; i++) begin
                     inbox_data[i + 24] = temp[63 - i * 8 -: 8];
                 end
 
                 inbox_data[30] = {temp[15:12], temp_item.icm_addr_map.page_num[11:8]};
                 inbox_data[31] = temp_item.icm_addr_map.page_num[7:0];
-                // `uvm_info("NOTICE", $sformatf("inbox data in config sequence: %h", inbox_data), UVM_LOW);
                 data_fifo.push(inbox_data);
             end
             `CMD_RST2INIT_QPEE   ,
@@ -193,11 +182,9 @@ class hca_config_sequence extends uvm_sequence #(hca_pcie_item);
             `CMD_SQD2SQD_QPEE    ,
             `CMD_SQD2RTS_QPEE    ,
             `CMD_INIT2INIT_QPEE: begin
-                // `uvm_info("NOTICE", $sformatf("qp_ctx.opt_param_mask: %h", temp_item.qp_ctx.opt_param_mask), UVM_LOW);
                 for (int i = 0; i < 4; i++) begin
                     inbox_data[i] = temp_item.qp_ctx.opt_param_mask[31 - i * 8 -: 8];
                 end
-                // `uvm_info("NOTICE", $sformatf("after opt_param_mask: inbox_data: %h", inbox_data), UVM_LOW);
                 for (int i = 0; i < 4; i++) begin
                     inbox_data[i + 4] = 0;
                 end
@@ -221,7 +208,6 @@ class hca_config_sequence extends uvm_sequence #(hca_pcie_item);
                     inbox_data[i + 28] = temp_item.qp_ctx.port_pkey[31 - i * 8 -: 8];
                 end
                 data_fifo.push(inbox_data);
-                // `uvm_info("NOTICE", $sformatf("inbox data in modify qp: %h", inbox_data), UVM_LOW);
                 inbox_data = 0;
 
                 inbox_data[0] = temp_item.qp_ctx.rnr_retry;
@@ -238,15 +224,11 @@ class hca_config_sequence extends uvm_sequence #(hca_pcie_item);
                 for (int i = 0; i < 16; i++) begin
                     inbox_data[i + 12] = temp_item.qp_ctx.rgid[127 - i * 8 -: 8];
                 end
-                // for (int i = 0; i < 4; i++) begin
-                //     inbox_data[i + 28] = 0;
-                // end
                 inbox_data[28] = temp_item.qp_ctx.dmac[15:8];
                 inbox_data[29] = temp_item.qp_ctx.dmac[7:0];
                 inbox_data[30] = temp_item.qp_ctx.smac[15:8];
                 inbox_data[31] = temp_item.qp_ctx.smac[7:0];
                 data_fifo.push(inbox_data);
-                // `uvm_info("NOTICE", $sformatf("inbox data in modify qp: %h", inbox_data), UVM_LOW);
                 inbox_data = 0;
 
                 for (int i = 0; i < 4; i++) begin
@@ -268,7 +250,6 @@ class hca_config_sequence extends uvm_sequence #(hca_pcie_item);
                     inbox_data[i + 28] = temp_item.qp_ctx.pd[31 - i * 8 -: 8];
                 end
                 data_fifo.push(inbox_data);
-                // `uvm_info("NOTICE", $sformatf("inbox data in modify qp: %h", inbox_data), UVM_LOW);
                 inbox_data = 0;
 
                 for (int i = 0; i < 4; i++) begin
@@ -296,7 +277,6 @@ class hca_config_sequence extends uvm_sequence #(hca_pcie_item);
                     inbox_data[i + 28] = temp_item.qp_ctx.last_acked_psn[31 - i * 8 -: 8];
                 end
                 data_fifo.push(inbox_data);
-                // `uvm_info("NOTICE", $sformatf("inbox data in modify qp: %h", inbox_data), UVM_LOW);
                 inbox_data = 0;
 
                 for (int i = 0; i < 4; i++) begin
@@ -324,7 +304,6 @@ class hca_config_sequence extends uvm_sequence #(hca_pcie_item);
                     inbox_data[i + 28] = temp_item.qp_ctx.rmsn[31 - i * 8 -: 8];
                 end
                 data_fifo.push(inbox_data);
-                // `uvm_info("NOTICE", $sformatf("inbox data in modify qp: %h", inbox_data), UVM_LOW);
                 inbox_data = 0;
 
                 for (int i = 0; i < 28; i++) begin
@@ -335,7 +314,6 @@ class hca_config_sequence extends uvm_sequence #(hca_pcie_item);
                 inbox_data[30] = temp_item.qp_ctx.sq_wqe_counter[15:8];
                 inbox_data[31] = temp_item.qp_ctx.sq_wqe_counter[7:0];
                 data_fifo.push(inbox_data);
-                // `uvm_info("NOTICE", $sformatf("inbox data in modify qp: %h", inbox_data), UVM_LOW);
                 inbox_data = 0;
             end
             `CMD_WRITE_MTT: begin
@@ -442,7 +420,6 @@ class hca_config_sequence extends uvm_sequence #(hca_pcie_item);
                     inbox_data[i + 28] = 0;
                 end
                 data_fifo.push(inbox_data);
-                // `uvm_info("SW2HW_NOTICE", $sformatf("sw2hw_cq inbox_data-1: %h", inbox_data), UVM_LOW);
                 inbox_data = 0;
 
                 for (int i = 0; i < 12; i++) begin
@@ -455,14 +432,12 @@ class hca_config_sequence extends uvm_sequence #(hca_pcie_item);
                     inbox_data[i + 16] = 0;
                 end
                 data_fifo.push(inbox_data);
-                // `uvm_info("SW2HW_NOTICE", $sformatf("sw2hw_cq inbox_data-2: %h", inbox_data), UVM_LOW);
             end
         endcase
 
         // write content in data_fifo into inbox
         if (temp_item.inbox_size != 0 ) begin
             mem.write_block(`INBOX_ADDR, data_fifo, temp_item.inbox_size);
-            // `uvm_info("NOTICE", $sformatf("mem written finished in config sequence! addr = %h, length = %h", `INBOX_ADDR, temp_item.inbox_size), UVM_LOW);
         end
     endtask: write_inbox
 

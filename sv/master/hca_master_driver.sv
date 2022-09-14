@@ -167,6 +167,7 @@ class hca_master_driver extends uvm_driver #(hca_pcie_item);
             else begin
                 `uvm_error("ILG_REQ_TYP", "illegal master driver input req item type!");
             end
+            // drive_item_to_dut(req_item);
         end
         else begin
             `uvm_error("ILG_REQ_TYP", "illegal master driver input req item cq_req_type!");
@@ -202,7 +203,7 @@ class hca_master_driver extends uvm_driver #(hca_pcie_item);
             // set tdata
             v_if.m_axis_cq_tdata[1:0]           = req_item.cq_addr_type;
             v_if.m_axis_cq_tdata[63:2]          = temp_addr[63:2];
-            v_if.m_axis_cq_tdata[76:64]         = 8'b0000_0001;
+            v_if.m_axis_cq_tdata[74:64]         = 11'b000_0000_0001;
             v_if.m_axis_cq_tdata[78:75]         = req_item.cq_req_type;
             v_if.m_axis_cq_tdata[79]            = 1'b0;
             v_if.m_axis_cq_tdata[87:80]         = req_item.cq_device;
@@ -248,10 +249,6 @@ class hca_master_driver extends uvm_driver #(hca_pcie_item);
         end
         v_if.m_axis_cq_tvalid = 1'b0;
         wait_clear();
-
-        // add hardware information detection here
-
-        // `uvm_info("NOTICE", "to trigger cmd_done immediately", UVM_LOW);
         cmd_done.put(1'b1); // inform config sequence hardware finished
     endtask: drive_hcr_item
 
@@ -312,11 +309,9 @@ class hca_master_driver extends uvm_driver #(hca_pcie_item);
         bit     [7:0]                   tag = 8'h12;
         int i, j, m, n;
 
-        // `uvm_info("NOTICE", {"MEM_RD begin in ", get_full_name()}, UVM_LOW)
         fork
             // send read req
             begin
-                // `uvm_info("NOTICE", {"MEM_RD req send begin ", get_full_name()}, UVM_LOW)
                 parity = 0;
 
                 // set tvalid

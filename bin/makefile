@@ -14,6 +14,7 @@ com:
 	+acc +vpi \
 	+memcbk \
 	+warn=none \
+	+nospecify \
 	+define+UVM_OBJECT_MUST_HAVE_CONSTRUCTOR+UVM_USE_CALLBACKS_OBJECTION_FOR_TEST_DONE \
 	+define+UVM_REG_DATA_WIDTH=256 \
 	-l compile.log \

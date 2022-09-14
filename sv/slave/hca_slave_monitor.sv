@@ -224,7 +224,7 @@ class hca_slave_monitor extends uvm_monitor;
                     end
                 end
                 else begin
-                    `uvm_fatal("RQ ERROR", $sformatf("RQ type error， rq_tdata: %h", vif.s_axis_rq_tdata));
+                    `uvm_fatal("RQ ERROR", $sformatf("RQ type error, rq_tdata: %h", vif.s_axis_rq_tdata));
                 end
 
                 // send received item to slave sequence

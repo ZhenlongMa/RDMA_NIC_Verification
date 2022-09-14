@@ -304,9 +304,10 @@ class test_direct_param extends uvm_test;
         // initialize HCA
         for (int host_id = 0; host_id < host_num; host_id++) begin
             cfg_agt.init_hca(host_id);
+            // cfg_agt.write_ivt(host_id);
         end
 
-        // create CQ and QP
+        // create EQ, CQ and QP
         for (int host_id = 0; host_id < host_num; host_id++) begin
             fork
                 automatic int a_host_id = host_id;
