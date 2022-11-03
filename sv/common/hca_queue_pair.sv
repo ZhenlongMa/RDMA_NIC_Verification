@@ -165,6 +165,9 @@ class hca_queue_pair extends uvm_object;
             desc_byte_len = 0;
             if (op_type == RECV) begin
                 desc_byte_len[ctx.rq_entry_sz_log] = 1'b1;
+                if (host_id == 0) begin
+                    `uvm_fatal("SEND_SIDE_ERR", "host 0 should not be receiver!");
+                end
             end
             else begin
                 desc_byte_len[ctx.sq_entry_sz_log] = 1'b1;

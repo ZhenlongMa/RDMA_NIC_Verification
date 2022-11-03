@@ -18,7 +18,6 @@
 //  mazhenlong      2021-03-22    v1.1             add `RST_DELAY and `AFTER_RST_DELAY
 //  mazhenlong      2021-03-24    v1.2             change ports connected to dut to _dut
 //  mazhenlong      2022-01-27    v2               support multi host
-//  mazhenlong      2022-09-14    v3               expand line width from 256 to 1024
 //
 //------------------------------------------------------------------------------------
 

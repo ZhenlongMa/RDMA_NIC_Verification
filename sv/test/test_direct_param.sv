@@ -446,6 +446,11 @@ class test_direct_param extends uvm_test;
 
             // write doorbell
             for (int host_id = 0; host_id < host_num; host_id++) begin
+
+                if (host_id == 1) begin
+                    break;
+                end
+                
                 fork
                     automatic int a_host_id = host_id;
                     // for every host
@@ -535,6 +540,11 @@ class test_direct_param extends uvm_test;
         remote_qp = qp.remote_qp;
         // remote_qpn = remote_qp.ctx.local_qpn;
 
+        // host 1 is not sender
+        if (host_id == 1) begin
+            break;
+        end
+
         if (host_id == 0) begin
             remote_host_id = 1;
         end
@@ -553,7 +563,12 @@ class test_direct_param extends uvm_test;
         ------------------------------------------------------------------*/
         // create data memory regions and put WQEs into mpt queue
         for (int wqe_id = 0; wqe_id < send_wqe_num + recv_wqe_num + write_wqe_num + read_wqe_num; wqe_id++) begin
-            if (wqe_id < send_wqe_num) begin // SEND
+            if (wqe_id < send_wqe_num) begin // SEND, host 1 is only receiver
+
+                // if (host_id == 1) begin
+                //     continue;
+                // end
+
                 // start physical address of THIS DOORBELL
                 addr src_paddr = `PA_DATA(proc_id, qp.ctx.local_qpn) + db_id * this.wqe_num * wqe_data_count; 
                 addr src_vaddr = `VA(src_paddr);
@@ -781,6 +796,9 @@ class test_direct_param extends uvm_test;
         bit [15:0] first_wqe_byte_offset;
         doorbell db;
         doorbell_item = hca_pcie_item::type_id::create("doorbell_item", this);
+        if (host_id == 1) begin
+            `uvm_fatal("SENDER_ERR", "host 1 should not be sender!");
+        end
         first_wqe_byte_offset = qp.sq_tail % qp.sq_byte_size;
         // What is this?
         if (first_wqe_byte_offset[3:0] != 0) begin
