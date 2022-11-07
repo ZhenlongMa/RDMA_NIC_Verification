@@ -450,7 +450,7 @@ class test_direct_param extends uvm_test;
                 if (host_id == 1) begin
                     break;
                 end
-                
+
                 fork
                     automatic int a_host_id = host_id;
                     // for every host
@@ -542,7 +542,7 @@ class test_direct_param extends uvm_test;
 
         // host 1 is not sender
         if (host_id == 1) begin
-            break;
+            return;
         end
 
         if (host_id == 0) begin
