@@ -540,10 +540,6 @@ class test_direct_param extends uvm_test;
         remote_qp = qp.remote_qp;
         // remote_qpn = remote_qp.ctx.local_qpn;
 
-        // host 1 is not sender
-        if (host_id == 1) begin
-            break;
-        end
 
         if (host_id == 0) begin
             remote_host_id = 1;
