@@ -136,7 +136,7 @@
 `define READY_GAP                       64
 `define PCIE_CLK_PERIOD                 10  // nanosecond
 `define RDMA_CLK_PERIOD                 10  // nanosecond
-`define BREAKTIME                       30000
+`define BREAKTIME                       10000
 
 ////////////////////////////////////////////////////////////
 // code

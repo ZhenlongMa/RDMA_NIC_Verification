@@ -283,11 +283,11 @@ class hca_slave_monitor extends uvm_monitor;
 
     function bit send2scb(addr rq_addr);
         if (rq_addr[47:33] == 15'b1) begin // if is CQ address
-            `uvm_info("CQE_NOTICE", $sformatf("slave monitor sends cqe to SCB, address: %h", rq_addr), UVM_LOW);
+            `uvm_info("SLV_MON_NOTICE", $sformatf("slave monitor sends cqe to SCB, address: %h", rq_addr), UVM_LOW);
             return 1;
         end
         else begin
-        `uvm_info("CQE_NOTICE", $sformatf("Not CQE, slave monitor does not send item to SCB, address: %h", rq_addr), UVM_LOW);
+        `uvm_info("SLV_MON_NOTICE", $sformatf("Not CQE, slave monitor does not send item to SCB, address: %h", rq_addr), UVM_LOW);
             return 0;
         end
     endfunction: send2scb
