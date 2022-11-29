@@ -3,7 +3,6 @@
 ////////////////////////////////////////////////////////////
 `define TCQ                             1
 `define DATA_WIDTH                      256
-`define HW_DATA_WIDTH                   1024
 `define DMA_HEAD_WIDTH                  128
 `define KEEP_WIDTH                      `DATA_WIDTH / 32
 `define QP_ID_WIDTH                     14
