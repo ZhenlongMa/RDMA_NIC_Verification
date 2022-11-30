@@ -447,9 +447,10 @@ class test_direct_param extends uvm_test;
             // write doorbell
             for (int host_id = 0; host_id < host_num; host_id++) begin
 
-                if (host_id == 1) begin
-                    break;
-                end
+                // only host 0 can send
+                // if (host_id == 1) begin
+                //     break;
+                // end
                 
                 fork
                     automatic int a_host_id = host_id;
@@ -549,9 +550,9 @@ class test_direct_param extends uvm_test;
         end
 
         // host 1 is not sender
-        if (host_id == 1) begin
-            return;
-        end
+        // if (host_id == 1) begin
+        //     return;
+        // end
 
         /*------------------------------------------------------------------
         // MEMORY SPACE FOR NETWORK DATA
