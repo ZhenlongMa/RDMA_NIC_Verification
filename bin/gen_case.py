@@ -50,7 +50,13 @@ for ud_qp_num in [0, 2]:
                                 file.write("+SG_NUM=" + str(sg_num) + " ")
                                 file.write("+DATA_CNT=" + str(data_count) + " ")
                                 file.write("+DATA_UNIT=" + data_unit + " ")
-                                file.write("-l ./case/small_datacount_log/case" + str(flag).zfill(flaglen) + ".log\n")
+                                file.write("-l ./case/small_datacount_log/case" + str(flag).zfill(flaglen) + ".log")
+                                file.write("+vcs+lic+wait\n")
+                                file.write("sed -i '/Memory Collision Error/d' ./case/small_datacount_log/case" + str(flag).zfill(flaglen) + ".log\n")
+                                file.write("sed -i '/A read was perf/d' ./case/small_datacount_log/case" + str(flag).zfill(flaglen) + ".log\n")
+                                file.write("sed -i '/TSDN28/d' ./case/small_datacount_log/case" + str(flag).zfill(flaglen) + ".log\n")
+                                file.write("sed -i '/^\s*$/d' ./case/small_datacount_log/case" + str(flag).zfill(flaglen) + ".log\n")
+
                                 flag = flag + 1
 
 file = open("./case/medium_datacount.sh", "w")
@@ -95,7 +101,13 @@ for ud_qp_num in [0, 2]:
                                 file.write("+SG_NUM=" + str(sg_num) + " ")
                                 file.write("+DATA_CNT=" + str(data_count) + " ")
                                 file.write("+DATA_UNIT=" + data_unit + " ")
-                                file.write("-l ./case/medium_datacount_log/case" + str(flag).zfill(flaglen) + ".log\n")
+                                file.write("-l ./case/medium_datacount_log/case" + str(flag).zfill(flaglen) + ".log")
+                                file.write("+vcs+lic+wait\n")
+                                file.write("sed -i '/Memory Collision Error/d' ./case/medium_datacount_log/case" + str(flag).zfill(flaglen) + ".log\n")
+                                file.write("sed -i '/A read was perf/d' ./case/medium_datacount_log/case" + str(flag).zfill(flaglen) + ".log\n")
+                                file.write("sed -i '/TSDN28/d' ./case/medium_datacount_log/case" + str(flag).zfill(flaglen) + ".log\n")
+                                file.write("sed -i '/^\s*$/d' ./case/medium_datacount_log/case" + str(flag).zfill(flaglen) + ".log\n")
+
                                 flag = flag + 1
 
 file = open("./case/mix_service_type.sh", "w")
@@ -140,7 +152,13 @@ for ud_qp_num in [2, 10]:
                                 file.write("+SG_NUM=" + str(sg_num) + " ")
                                 file.write("+DATA_CNT=" + str(data_count) + " ")
                                 file.write("+DATA_UNIT=" + data_unit + " ")
-                                file.write("-l ./case/mix_service_type_log/case" + str(flag).zfill(flaglen) + ".log\n")
+                                file.write("-l ./case/mix_service_type_log/case" + str(flag).zfill(flaglen) + ".log")
+                                file.write("+vcs+lic+wait\n")
+                                file.write("sed -i '/Memory Collision Error/d' ./case/mix_service_type_log/case" + str(flag).zfill(flaglen) + ".log\n")
+                                file.write("sed -i '/A read was perf/d' ./case/mix_service_type_log/case" + str(flag).zfill(flaglen) + ".log\n")
+                                file.write("sed -i '/TSDN28/d' ./case/mix_service_type_log/case" + str(flag).zfill(flaglen) + ".log\n")
+                                file.write("sed -i '/^\s*$/d' ./case/mix_service_type_log/case" + str(flag).zfill(flaglen) + ".log\n")
+
                                 flag = flag + 1
 
 file = open("./case/mix_operation_type.sh", "w")
@@ -185,7 +203,13 @@ for ud_qp_num in [2]:
                                 file.write("+SG_NUM=" + str(sg_num) + " ")
                                 file.write("+DATA_CNT=" + str(data_count) + " ")
                                 file.write("+DATA_UNIT=" + data_unit + " ")
-                                file.write("-l ./case/mix_operation_type_log/case" + str(flag).zfill(flaglen) + ".log\n")
+                                file.write("-l ./case/mix_operation_type_log/case" + str(flag).zfill(flaglen) + ".log")
+                                file.write("+vcs+lic+wait\n")
+                                file.write("sed -i '/Memory Collision Error/d' ./case/mix_operation_type_log/case" + str(flag).zfill(flaglen) + ".log\n")
+                                file.write("sed -i '/A read was perf/d' ./case/mix_operation_type_log/case" + str(flag).zfill(flaglen) + ".log\n")
+                                file.write("sed -i '/TSDN28/d' ./case/mix_operation_type_log/case" + str(flag).zfill(flaglen) + ".log\n")
+                                file.write("sed -i '/^\s*$/d' ./case/mix_operation_type_log/case" + str(flag).zfill(flaglen) + ".log\n")
+
                                 flag = flag + 1
 
 file = open("./case/multidb.sh", "w")
@@ -230,7 +254,13 @@ for ud_qp_num in [2]:
                                     file.write("+SG_NUM=" + str(sg_num) + " ")
                                     file.write("+DATA_CNT=" + str(data_count) + " ")
                                     file.write("+DATA_UNIT=" + data_unit + " ")
-                                    file.write("-l ./case/multidb_log/case" + str(flag).zfill(flaglen) + ".log\n")
+                                    file.write("-l ./case/multidb_log/case" + str(flag).zfill(flaglen) + ".log")
+                                    file.write("+vcs+lic+wait\n")
+                                    file.write("sed -i '/Memory Collision Error/d' ./case/multidb_log/case" + str(flag).zfill(flaglen) + ".log\n")
+                                    file.write("sed -i '/A read was perf/d' ./case/multidb_log/case" + str(flag).zfill(flaglen) + ".log\n")
+                                    file.write("sed -i '/TSDN28/d' ./case/multidb_log/case" + str(flag).zfill(flaglen) + ".log\n")
+                                    file.write("sed -i '/^\s*$/d' ./case/multidb_log/case" + str(flag).zfill(flaglen) + ".log\n")
+
                                     flag = flag + 1
 
 file = open("./case/multiqp.sh", "w")
@@ -275,5 +305,20 @@ for ud_qp_num in [0, 16, 64, 128]:
                                     file.write("+SG_NUM=" + str(sg_num) + " ")
                                     file.write("+DATA_CNT=" + str(data_count) + " ")
                                     file.write("+DATA_UNIT=" + data_unit + " ")
-                                    file.write("-l ./case/multiqp_log/case" + str(flag).zfill(flaglen) + ".log\n")
+                                    file.write("-l ./case/multiqp_log/case" + str(flag).zfill(flaglen) + ".log ")
+                                    file.write("+vcs+lic+wait\n")
+                                    file.write("sed -i '/Memory Collision Error/d' ./case/multiqp_log/case" + str(flag).zfill(flaglen) + ".log\n")
+                                    file.write("sed -i '/A read was perfor/d' ./case/multiqp_log/case" + str(flag).zfill(flaglen) + ".log\n")
+                                    file.write("sed -i '/TSDN28/d' ./case/multiqp_log/case" + str(flag).zfill(flaglen) + ".log\n")
+                                    file.write("sed -i '/^\s*$/d' ./case/multiqp_log/case" + str(flag).zfill(flaglen) + ".log\n")
                                     flag = flag + 1
+
+def delete_redundancy(file, casename):
+    str1 = "/Memory Collision Error/d"
+    str2 = "/A read was perf/d"
+    str3 = "/TSDN28/d"
+    str4 = "/^\s*$/d"
+    file.write("sed -i " + str1 + " ./case/" + casename + "_log/case" + str(flag).zfill(flaglen) + ".log\n")
+    file.write("sed -i " + str2 + " ./case/" + casename + "_log/case" + str(flag).zfill(flaglen) + ".log\n")
+    file.write("sed -i " + str3 + " ./case/" + casename + "_log/case" + str(flag).zfill(flaglen) + ".log\n")
+    file.write("sed -i " + str4 + " ./case/" + casename + "_log/case" + str(flag).zfill(flaglen) + ".log\n")
