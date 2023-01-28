@@ -4,7 +4,7 @@
 OUTPUT = hca_test
 TEST_NAME = test_direct_param
 CASE_NAME = test_direct
-VPD_NAME = wave.vpd
+WAVE_NAME = dve_wave.vpd
 
 # commands
 com:
@@ -21,7 +21,7 @@ com:
 	-f filelist.f -o ${OUTPUT}
 
 debug:
-	./${OUTPUT} -uvmDebug +vpdfile+${VPDNAME} +UVM_VERDI_TRACE=HIER +UVM_VERBOSITY=UVM_LOW +UVM_TESTNAME=${TEST_NAME} \
+	./${OUTPUT} -uvmDebug +vpdfile+${WAVE_NAME} +UVM_VERDI_TRACE=HIER +UVM_VERBOSITY=UVM_LOW +UVM_TESTNAME=${TEST_NAME} \
 				+HOST_NUM=2 \
 				+PROC_NUM=2 \
 				+DB_NUM=1 \

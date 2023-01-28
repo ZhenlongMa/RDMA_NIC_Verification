@@ -9,9 +9,9 @@
 -y /tools/Xilinx/vivado/2016.4/data/verilog/src/unimacro
 -y /tools/Xilinx/vivado/2016.4/data/verilog/src/retarget
 
--f /project/mazhenlong/hca_ip/secureip/gthe2_channel/gthe2_channel_cell.list.f
--f /project/mazhenlong/hca_ip/secureip/gthe2_common/gthe2_common_cell.list.f
--f /project/mazhenlong/hca_ip/secureip/pcie_3_0/pcie_3_0_cell.list.f
+//-f /project/mazhenlong/hca_ip/secureip/gthe2_channel/gthe2_channel_cell.list.f
+//-f /project/mazhenlong/hca_ip/secureip/gthe2_common/gthe2_common_cell.list.f
+//-f /project/mazhenlong/hca_ip/secureip/pcie_3_0/pcie_3_0_cell.list.f
 -F /project/mazhenlong/hca_ip/filelist_ip.f
 
 /tools/Xilinx/vivado/2016.4/data/verilog/src/glbl.v 

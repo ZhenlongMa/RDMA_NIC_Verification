@@ -55,7 +55,9 @@ for ud_qp_num in [0, 2]:
                                 file.write("sed -i '/Memory Collision Error/d' ./case/small_datacount_log/case" + str(flag).zfill(flaglen) + ".log\n")
                                 file.write("sed -i '/A read was perf/d' ./case/small_datacount_log/case" + str(flag).zfill(flaglen) + ".log\n")
                                 file.write("sed -i '/TSDN28/d' ./case/small_datacount_log/case" + str(flag).zfill(flaglen) + ".log\n")
+                                file.write("sed -i '/If BWEB/d' ./case/small_datacount_log/case" + str(flag).zfill(flaglen) + ".log\n")
                                 file.write("sed -i '/^\s*$/d' ./case/small_datacount_log/case" + str(flag).zfill(flaglen) + ".log\n")
+                                
 
                                 flag = flag + 1
 
@@ -106,6 +108,7 @@ for ud_qp_num in [0, 2]:
                                 file.write("sed -i '/Memory Collision Error/d' ./case/medium_datacount_log/case" + str(flag).zfill(flaglen) + ".log\n")
                                 file.write("sed -i '/A read was perf/d' ./case/medium_datacount_log/case" + str(flag).zfill(flaglen) + ".log\n")
                                 file.write("sed -i '/TSDN28/d' ./case/medium_datacount_log/case" + str(flag).zfill(flaglen) + ".log\n")
+                                file.write("sed -i '/If BWEB/d' ./case/medium_datacount_log/case" + str(flag).zfill(flaglen) + ".log\n")
                                 file.write("sed -i '/^\s*$/d' ./case/medium_datacount_log/case" + str(flag).zfill(flaglen) + ".log\n")
 
                                 flag = flag + 1
@@ -157,6 +160,7 @@ for ud_qp_num in [2, 10]:
                                 file.write("sed -i '/Memory Collision Error/d' ./case/mix_service_type_log/case" + str(flag).zfill(flaglen) + ".log\n")
                                 file.write("sed -i '/A read was perf/d' ./case/mix_service_type_log/case" + str(flag).zfill(flaglen) + ".log\n")
                                 file.write("sed -i '/TSDN28/d' ./case/mix_service_type_log/case" + str(flag).zfill(flaglen) + ".log\n")
+                                file.write("sed -i '/If BWEB/d' ./case/mix_service_type_log/case" + str(flag).zfill(flaglen) + ".log\n")
                                 file.write("sed -i '/^\s*$/d' ./case/mix_service_type_log/case" + str(flag).zfill(flaglen) + ".log\n")
 
                                 flag = flag + 1
@@ -208,6 +212,7 @@ for ud_qp_num in [2]:
                                 file.write("sed -i '/Memory Collision Error/d' ./case/mix_operation_type_log/case" + str(flag).zfill(flaglen) + ".log\n")
                                 file.write("sed -i '/A read was perf/d' ./case/mix_operation_type_log/case" + str(flag).zfill(flaglen) + ".log\n")
                                 file.write("sed -i '/TSDN28/d' ./case/mix_operation_type_log/case" + str(flag).zfill(flaglen) + ".log\n")
+                                file.write("sed -i '/If BWEB/d' ./case/mix_operation_type_log/case" + str(flag).zfill(flaglen) + ".log\n")
                                 file.write("sed -i '/^\s*$/d' ./case/mix_operation_type_log/case" + str(flag).zfill(flaglen) + ".log\n")
 
                                 flag = flag + 1
@@ -259,6 +264,7 @@ for ud_qp_num in [2]:
                                     file.write("sed -i '/Memory Collision Error/d' ./case/multidb_log/case" + str(flag).zfill(flaglen) + ".log\n")
                                     file.write("sed -i '/A read was perf/d' ./case/multidb_log/case" + str(flag).zfill(flaglen) + ".log\n")
                                     file.write("sed -i '/TSDN28/d' ./case/multidb_log/case" + str(flag).zfill(flaglen) + ".log\n")
+                                    file.write("sed -i '/If BWEB/d' ./case/multidb_log/case" + str(flag).zfill(flaglen) + ".log\n")
                                     file.write("sed -i '/^\s*$/d' ./case/multidb_log/case" + str(flag).zfill(flaglen) + ".log\n")
 
                                     flag = flag + 1
@@ -310,6 +316,7 @@ for ud_qp_num in [0, 16, 64, 128]:
                                     file.write("sed -i '/Memory Collision Error/d' ./case/multiqp_log/case" + str(flag).zfill(flaglen) + ".log\n")
                                     file.write("sed -i '/A read was perfor/d' ./case/multiqp_log/case" + str(flag).zfill(flaglen) + ".log\n")
                                     file.write("sed -i '/TSDN28/d' ./case/multiqp_log/case" + str(flag).zfill(flaglen) + ".log\n")
+                                    file.write("sed -i '/If BWEB/d' ./case/multiqp_log/case" + str(flag).zfill(flaglen) + ".log\n")
                                     file.write("sed -i '/^\s*$/d' ./case/multiqp_log/case" + str(flag).zfill(flaglen) + ".log\n")
                                     flag = flag + 1
 

@@ -77,7 +77,7 @@ class hca_comm_sequence extends uvm_sequence #(hca_pcie_item);
             comm_item.cq_bus = 0; //not sure
             comm_item.cq_req_type = MEM_WR;
             comm_item.cq_dword_count = 2; // WARNING: should be modified!
-            comm_item.cq_bar_id = 2;
+            comm_item.cq_bar_id = `DB_BAR_ID;
             comm_item.cq_bar_aperture = 22;
             comm_item.item_type = DOORBELL;
             temp_data = {

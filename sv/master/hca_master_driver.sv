@@ -94,8 +94,10 @@ class hca_master_driver extends uvm_driver #(hca_pcie_item);
             seq_item_port.get_next_item(req_item);
             `uvm_info("NOTICE", {"req_item get in ", get_full_name}, UVM_LOW);
             // if (req_item.item_type == DOORBELL) begin
-            //     for (int i = 0; i < `CFG_COMM_GAP; i++) begin
-            //         @ (posedge v_if.pcie_clk);
+            //     if (req_item.db.host_id == 0) begin
+            //         for (int i = 0; i < `CFG_COMM_GAP; i++) begin
+            //             @ (posedge v_if.pcie_clk);
+            //         end
             //     end
             // end
             drive_item(req_item);

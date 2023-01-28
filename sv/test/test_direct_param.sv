@@ -805,6 +805,7 @@ class test_direct_param extends uvm_test;
         db.f0 = 0;
         db.opcode = op_code;
         db.qp_num = qp.ctx.local_qpn;
+        // db.host_id = host_id;
         
         // set size0
         if (qp.ctx.flags[23:16] == `HGHCA_QP_ST_UD) begin
@@ -1024,7 +1025,7 @@ class test_direct_param extends uvm_test;
         mpt_icm_addr = cfg_agt.map_icm(host_id, `ICM_MPT_TYP, 1);
 
         // write MTT entries of new MR
-        // number of MTT entries should be no larger than 255
+        // number of MTT entries should be no larger than 255, or otherwise configuration would fail
         for (int mtt_num_sent = 0; mtt_num_sent < mtt_num; mtt_num_sent = mtt_num_sent + 255) begin
             // mtt seg is the header index of the whole MR mtt entries
             if (mtt_num_sent == 0) begin

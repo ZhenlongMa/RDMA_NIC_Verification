@@ -138,6 +138,9 @@ class hca_slave_monitor extends uvm_monitor;
                     received_item.rq_force_ecrc             = vif.s_axis_rq_tdata[127];
                     received_item.rq_first_be               = vif.s_axis_rq_tuser[3:0];
                     received_item.rq_last_be                = vif.s_axis_rq_tuser[7:4];
+                    if (vif.s_axis_rq_tlast != 1) begin
+                        `uvm_fatal("RQ_ERR", "RD rq_tlast error!");
+                    end
                 end
                 else if (vif.s_axis_rq_tdata[78:75] == `PCIE_MEM_WR) begin
                     `uvm_info("NOTICE", $sformatf("received dma write request! addr: %h, dw count: %h, first be: %h, last be: %h", 
@@ -211,20 +214,40 @@ class hca_slave_monitor extends uvm_monitor;
                         beat_num++;
 
                         if (received_dw_num < received_item.rq_dword_count) begin
+                            if (vif.s_axis_rq_tlast == 1 && 
+                                vif.s_axis_rq_tvalid == 1 && 
+                                vif.s_axis_rq_tready == 1) begin
+                                if (vif.s_axis_rq_tlast == 1) begin
+                                    `uvm_fatal("RQ_ERR", $sformatf("WR rq_tlast error, should NOT be 1! received_dw_num: %h, received_item.rq_dword_count: %h", 
+                                        received_dw_num, received_item.rq_dword_count));
+                                end
+                            end
                             while (1) begin
                                 @ (posedge vif.pcie_clk);
                                 if (vif.s_axis_rq_tvalid == 1) begin
+                                    // if (vif.s_axis_rq_tlast == 1) begin
+                                    //     `uvm_fatal("RQ_ERR", "WR rq_tlast error, should NOT be 1!");
+                                    // end
+                                    // else begin
+                                    //     break;
+                                    // end
                                     break;
                                 end
                             end
                         end
                         else begin
-                            break;
+                            if (vif.s_axis_rq_tlast == 1) begin
+                                break;
+                            end
+                            else begin
+                                `uvm_fatal("RQ_ERR", $sformatf("WR rq_tlast error! received_dw_num: %h, received_item.rq_dword_count: %h", 
+                                    received_dw_num, received_item.rq_dword_count));
+                            end
                         end
                     end
                 end
                 else begin
-                    `uvm_fatal("RQ ERROR", $sformatf("RQ type error, rq_tdata: %h", vif.s_axis_rq_tdata));
+                    `uvm_fatal("RQ_ERR", $sformatf("RQ type error, rq_tdata: %h", vif.s_axis_rq_tdata));
                 end
 
                 // send received item to slave sequence
@@ -271,7 +294,7 @@ class hca_slave_monitor extends uvm_monitor;
                     else begin
                         heartbeat++;
                         if (heartbeat > `BREAKTIME) begin
-                            `uvm_fatal("AREYOUDEAD?", "Too much time no rq_tvalid!");
+                            `uvm_fatal("AREYOUDEAD?", "Too long no rq_tvalid!");
                         end
                     end
                 end

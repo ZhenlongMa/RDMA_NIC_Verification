@@ -453,7 +453,7 @@ class hca_config_sequence extends uvm_sequence #(hca_pcie_item);
         item.cq_bus = 0; //not sure
         item.cq_req_type = MEM_WR;
         item.cq_dword_count = 7;
-        item.cq_bar_id = 0;
+        item.cq_bar_id = `HCR_BAR_ID;
         item.cq_bar_aperture = 28;
         temp_data = {
             {32'b0},

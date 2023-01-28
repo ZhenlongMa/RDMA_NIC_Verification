@@ -71,8 +71,9 @@
 ////////////////////////////////////////////////////////////
 // address
 ////////////////////////////////////////////////////////////
-`define HCR_BAR_ADDR                    64'h0000_0000_0000_0000
-`define DB_BAR_ADDR                     64'h0000_0000_0000_0000
+`define HCR_BAR_ADDR                    `ADDR_WIDTH'h0000_0000_0000_0000
+`define DB_BAR_ADDR                     `ADDR_WIDTH'h0000_0000_0000_0000
+`define ETH_BAR_ADDR                    `ADDR_WIDTH'h0000_0000_1000_0000
 
 `define INBOX_ADDR                      `ADDR_WIDTH'h0000_0000_1234_1000
 `define OUTBOX_ADDR                     `ADDR_WIDTH'h0000_0000_1234_2000
@@ -127,7 +128,7 @@
 `define AFTER_RST_DELAY                 1000
 `define DL                              #1
 `define READ_GO_GAP                     30
-`define CFG_COMM_GAP                    2000
+`define CFG_COMM_GAP                    1000
 `define CFG_GAP                         300  // time gap between master driver sends two item to DUT
 `define CQE2SCB_GAP                     2000 // time gap between slave monitor receives a CQE
                                              // and sends it to scoreboard
@@ -149,6 +150,9 @@
 // others
 ////////////////////////////////////////////////////////////
 `define CMD_POLL_TOKEN                  16'hffff_ffff
+
+`define HCR_BAR_ID                      0
+`define DB_BAR_ID                       2
 
 // `define QPC_BASE_PATH                   "hca_tb_top.hca_dut.RDMA_Top.ctxmgt.ctxmdata.qv_qpc_base"
 // `define CQC_BASE_PATH                   "hca_tb_top.hca_dut.RDMA_Top.ctxmgt.ctxmdata.qv_cqc_base"
@@ -183,6 +187,7 @@ typedef struct {
     bit [23     : 0] qp_num;
     bit [7      : 0] size0;
     bit [10     : 0] proc_id;
+    // int host_id;
 } doorbell;
 
 typedef struct {
