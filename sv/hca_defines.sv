@@ -125,7 +125,7 @@
 // time
 ////////////////////////////////////////////////////////////
 `define RST_DELAY                       1000
-`define AFTER_RST_DELAY                 1000
+`define AFTER_RST_DELAY                 100000
 `define DL                              #1
 `define READ_GO_GAP                     30
 `define CFG_COMM_GAP                    1000

@@ -271,9 +271,9 @@ for ud_qp_num in [2]:
 
 file = open("./case/multiqp.sh", "w")
 
-for ud_qp_num in [0, 16, 64, 128]:
-    for uc_qp_num in [0, 16, 64, 128]:
-        for rc_qp_num in [0, 16, 64, 128]:
+for ud_qp_num in [0, 16, 32]:
+    for uc_qp_num in [0, 16, 32]:
+        for rc_qp_num in [0, 16, 32]:
             if (rc_qp_num == 0 and uc_qp_num == 0 and ud_qp_num == 0):
                 continue
             if (rc_qp_num + uc_qp_num + ud_qp_num > 8192):
