@@ -5,6 +5,7 @@ rm -rf ./case/mix_operation_type_log/*
 rm -rf ./case/mix_service_type_log/*
 rm -rf ./case/multidb_log/*
 rm -rf ./case/multiqp_log/*
+rm -rf ./case/multiwqe_log/*
 echo "Logs cleaned!"
 
 rm -rf ./case/small_datacount_wave/*
@@ -13,6 +14,7 @@ rm -rf ./case/mix_operation_type_wave/*
 rm -rf ./case/mix_service_type_wave/*
 rm -rf ./case/multidb_wave/*
 rm -rf ./case/multiqp_wave/*
+rm -rf ./case/multiwqe_wave/*
 echo "Waveforms cleaned!"
 
 bsub -J small   ./case/small_datacount.sh
@@ -21,6 +23,7 @@ bsub -J op      ./case/mix_operation_type.sh
 bsub -J st      ./case/mix_service_type.sh
 bsub -J db      ./case/multidb.sh
 bsub -J qp      ./case/multiqp.sh
+bsub -J qp      ./case/multiwqe.sh
 # ./case/small_datacount.sh &
 # ./case/medium_datacount.sh &
 # ./case/mix_operation_type.sh &

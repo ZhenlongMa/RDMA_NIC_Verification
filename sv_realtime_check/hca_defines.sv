@@ -133,7 +133,7 @@
 `define READ_GO_GAP                     30
 // `define CFG_COMM_GAP                    1000
 `define CFG_GAP                         300  // time gap between master driver sends two item to DUT
-`define CQE2SCB_GAP                     2000 // time gap between slave monitor receives a CQE
+`define CQE2SCB_GAP                     5 // time gap between slave monitor receives a CQE
                                              // and sends it to scoreboard
 `define VALID_GAP                       64
 `define READY_GAP                       64
