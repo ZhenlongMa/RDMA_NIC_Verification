@@ -170,6 +170,9 @@ class hca_config_agent extends uvm_object;
                     icm_vaddr.mtt_virt_addr[host_id].push_back(temp_virt_addr + j * `PAGE_SIZE);
                 end
             end
+            if (icm_vaddr.mtt_virt_addr[host_id].size() > 512) begin
+                `uvm_fatal("ICM_PAGE_EXCEED", "ICM overwrite!");
+            end
         end
         else if (m_type == `ICM_EQC_TYP) begin
             temp_virt_addr = `EQC_OFFSET;
