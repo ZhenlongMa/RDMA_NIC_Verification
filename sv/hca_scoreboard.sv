@@ -34,8 +34,9 @@ class hca_scoreboard extends uvm_scoreboard;
     hca_memory mem[];
     hca_queue_list q_list;
     hca_check_mem_list check_mem_list;
-    int host_num = 1;
+    int host_num = -1;
     int db_num;
+    int stall_flag[];
     hca_fifo #(.width(256)) src_data_fifo;
     hca_fifo #(.width(256)) dst_data_fifo;
     mailbox glb_stop_mbx;
@@ -123,6 +124,11 @@ class hca_scoreboard extends uvm_scoreboard;
 
         // instantiate comparer
         item_comparer = new();
+
+        stall_flag = new[host_num];
+        for (int i = 0; i < host_num; i++) begin
+            stall_flag[i] = 0;
+        end
     endfunction: build_phase
 
     //------------------------------------------------------------------------------
@@ -142,14 +148,46 @@ class hca_scoreboard extends uvm_scoreboard;
                         `uvm_info("NOTICE", "main part of run_phase in scb begin!", UVM_LOW);
                         while (1) begin
                             duv_fifo[j].get(duv_fifo_item[j]);
-                            `uvm_info("CQE_NOTICE", $sformatf("CQE got by scb! host_id: %h", j), UVM_LOW);
+                            `uvm_info("SCB_NOTICE", $sformatf("Item got by scb! host_id: %h", j), UVM_LOW);
+                            // If SCB receives a INTR when reference CQE queue is not empty, fail
+                            if (duv_fifo_item[j].item_type == INTR) begin
+                                `uvm_info("SCB_NOTICE", $sformatf("INTR got by scb! host_id: %h", j), UVM_LOW);
+                                stall_flag[j] = 1;
+                                if (q_list.cq_list[j][0].cqe_list.size() != 0) begin
+                                    if (check_stall() == 1) begin
+                                        `uvm_fatal("DEAD", "Heart stopped!");
+                                    end
+                                    else begin
+                                        continue;
+                                    end
+                                end
+                                else begin
+                                    break;
+                                end
+                                // if(check_stall() == 1) begin
+                                //     `uvm_fatal("DEAD", "Heart stopped!");
+                                // end
+                                // else begin
+                                //     break;
+                                // end
+                            end
+                            stall_flag[j] = 0;
+                            `uvm_info("SCB_NOTICE", $sformatf("CQE got by scb! host_id: %h", j), UVM_LOW);
                             check_cqe(duv_fifo_item[j], j);
                             q_list.cq_list[j][0].cqe_list.pop_front();
-                            `uvm_info("CQE_NOTICE", $sformatf("ref CQE got by scb! host_id: %h", j), UVM_LOW);
+                            // `uvm_info("CQE_NOTICE", $sformatf("ref CQE got by scb! host_id: %h", j), UVM_LOW);
                             `uvm_info("CQE_NOTICE", $sformatf("ref cqe remaining: %0d! host_id: %h", q_list.cq_list[j][0].cqe_list.size(), j), UVM_LOW);
+                            
+                            // If reference CQE queue is empty, wait for INTR to guarantee communication is complete
                             if (q_list.cq_list[j][0].cqe_list.size() == 0) begin
-                                `uvm_info("GLB_STOP_INFO", "global stop launched by scoreboard!", UVM_LOW);
-                                break;
+                                duv_fifo[j].get(duv_fifo_item[j]);
+                                if (duv_fifo_item[j].item_type == INTR) begin
+                                    `uvm_info("GLB_STOP_INFO", "global stop launched by scoreboard!", UVM_LOW);
+                                    break;
+                                end
+                                else begin
+                                    `uvm_fatal("ITEM_TYPE_ERROR", "WTF is this?");
+                                end
                             end
                         end
                         // break;
@@ -204,6 +242,16 @@ class hca_scoreboard extends uvm_scoreboard;
             `uvm_info("CHECK_INFO", $sformatf("check complete, host[%0d] data count: %0d", i, total_data_amount), UVM_LOW);
         end
     endtask: judge
+
+    function int check_stall();
+        // If all hosts receive INTR, the system is down
+        for (int i = 0; i < host_num; i++) begin
+            if (stall_flag[i] == 0) begin
+                return 0;
+            end
+        end
+        return 1;
+    endfunction: check_stall
 
     function bit check_mem(int src_host_id, addr src_addr, int dst_host_id, addr dst_addr, int length);
         bit [255:0] src_data;
