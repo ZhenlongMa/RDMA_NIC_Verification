@@ -263,9 +263,9 @@ class hca_slave_monitor extends uvm_monitor;
                             hca_pcie_item item_to_scb_cqe;
                             item_to_scb_cqe = hca_pcie_item::type_id::create("item_to_scb_cqe", this);
                             item_to_scb_cqe.copy(received_item);
-                            for (int i = 0; i < `CQE2SCB_GAP; i++) begin
-                                @(posedge vif.pcie_clk);
-                            end
+                            // for (int i = 0; i < `CQE2SCB_GAP; i++) begin
+                            //     @(posedge vif.pcie_clk);
+                            // end
                             port2scb.write(item_to_scb_cqe);
                             // item_to_scb = hca_pcie_item::type_id::create("item_to_scb", this);
                             // item_to_scb.copy(received_item);
@@ -294,11 +294,34 @@ class hca_slave_monitor extends uvm_monitor;
                     else begin
                         heartbeat++;
                         if (heartbeat > `BREAKTIME) begin
-                            `uvm_fatal("AREYOUDEAD?", "Too long no rq_tvalid!");
+                            // `uvm_fatal("AREYOUDEAD?", "Too long no rq_tvalid!");
+                            hca_pcie_item item_to_scb;
+                            item_to_scb = hca_pcie_item::type_id::create("item_to_scb", this);
+                            item_to_scb.item_type = INTR;
+                            heartbeat = 0;
+                            port2scb.write(item_to_scb);
                         end
                     end
                 end
             end
+
+            // begin
+            //     while (1) begin
+            //         @ (posedge vif.pcie_clk);
+            //         if (vif.global_stop == 1) begin
+            //             break;
+            //         end
+            //         if (vif.s_axis_rq_tvalid == 1) begin
+            //             heartbeat = 0;
+            //         end
+            //         else begin
+            //             heartbeat++;
+            //             if (heartbeat > `BREAKTIME) begin
+            //                 `uvm_fatal("AREYOUDEAD?", "Too long no rq_tvalid!");
+            //             end
+            //         end
+            //     end
+            // end
         join
         `uvm_info("NOTICE", "\033[47;40mslave monitor run_phase stop!\033[0m", UVM_LOW);
         phase.drop_objection(this);
