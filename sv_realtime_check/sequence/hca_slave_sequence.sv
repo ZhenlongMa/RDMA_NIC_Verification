@@ -178,7 +178,6 @@ class hca_slave_sequence extends uvm_sequence #(hca_pcie_item);
                 int length;
                 addr start_addr;
                 hca_fifo #(.width(256)) temp_fifo;
-                `uvm_info("NOTICE", "MEM_WR item received in slave sequence!", UVM_LOW);
                 temp_fifo = hca_fifo #(.width(256))::type_id::create("temp_fifo");
                 while (received_item.data_payload.size() != 0) begin
                     temp_data = received_item.data_payload.pop_front();
@@ -188,6 +187,27 @@ class hca_slave_sequence extends uvm_sequence #(hca_pcie_item);
 
                 // consider last_be and first_be
                 length = received_item.rq_dword_count * 4;
+                start_addr = received_item.rq_addr;
+                // for (int idx = 0; idx < 4; idx++) begin
+                //     if (received_item.rq_first_be[idx] == 0) begin
+                //         start_addr++;
+                //         length--;
+                //         temp_fifo.pop_byte();
+                //     end
+                //     else begin
+                //         break;
+                //     end
+                // end
+                // for (int idx = 0; idx < 4; idx++) begin
+                //     if (received_item.rq_first_be[3 - idx] == 0) begin
+
+                //     end
+                // end
+                if (check_be(received_item.rq_first_be, received_item.rq_last_be) == 0) begin
+                    `uvm_fatal("BE_ERR", $sformatf("RQ BE error! first_be: %b, last_be: %b", 
+                        received_item.rq_first_be, received_item.rq_last_be));
+                end
+
                 case (received_item.rq_first_be)
                     4'b1111: begin
                         start_addr = received_item.rq_addr;
@@ -212,13 +232,32 @@ class hca_slave_sequence extends uvm_sequence #(hca_pcie_item);
                         length -= 3;
                     end
                     4'b0001: begin
+                        start_addr = received_item.rq_addr;
                         length = 1;
                     end
                     4'b0011: begin
+                        start_addr = received_item.rq_addr;
                         length = 2;
                     end
                     4'b0111: begin
+                        start_addr = received_item.rq_addr;
                         length = 3;
+                    end
+                    4'b0110: begin
+                        start_addr = received_item.rq_addr + 1;
+                        length = 2;
+                        temp_fifo.pop_byte();
+                    end
+                    4'b0010: begin
+                        start_addr = received_item.rq_addr + 1;
+                        length = 1;
+                        temp_fifo.pop_byte();
+                    end
+                    4'b0100: begin
+                        start_addr = received_item.rq_addr + 2;
+                        length = 1;
+                        temp_fifo.pop_byte();
+                        temp_fifo.pop_byte();
                     end
                     default: begin
                         `uvm_fatal("BE_ERROR", $sformatf("rq_first_be error: %h", received_item.rq_first_be));
@@ -278,5 +317,34 @@ class hca_slave_sequence extends uvm_sequence #(hca_pcie_item);
             return byte_cnt;
         end
     endfunction: get_byte_count
+
+    function bit check_be(bit [3:0] first_be, bit [3:0] last_be);
+        bit [7:0] be;
+        int start = 0;
+        int last = 7;
+        be = {last_be, first_be};
+        for (int i = 0; i < 8; i++) begin
+            if (be[i] == 1) begin
+                start = i;
+                break;
+            end
+        end
+        for (int i = 0; i < 8; i++) begin
+            if (be[7 - i] == 1) begin
+                last = 7 - i;
+                break;
+            end
+        end
+        for (int i = start; i < last; i++) begin
+            if (be[i] == 0) begin
+                return 0;
+            end
+        end
+
+        if (first_be == 0) begin
+            return 0;
+        end
+        return 1;
+    endfunction: check_be
 endclass: hca_slave_sequence
 `endif
