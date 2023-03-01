@@ -304,7 +304,6 @@ class test_direct_param extends uvm_test;
         // initialize HCA
         for (int host_id = 0; host_id < host_num; host_id++) begin
             cfg_agt.init_hca(host_id);
-            // cfg_agt.write_ivt(host_id);
         end
 
         // create EQ, CQ and QP
@@ -325,12 +324,12 @@ class test_direct_param extends uvm_test;
                         service_type = RC;
 
                         // create CQ
-                        cqc_start_addr = cfg_agt.map_icm(a_host_id, `ICM_CQC_TYP, 1); // is this enough?
-                        temp_cq = create_cq(proc_id, a_host_id, pd);
+                        // cqc_start_addr = cfg_agt.map_icm(host_id, `ICM_CQC_TYP, 1); // is this enough?
+                        temp_cq = create_cq(proc_id, host_id, pd);
 
                         // create QP, should data MR be created here?
-                        qpc_start_addr = cfg_agt.map_icm(a_host_id, `ICM_QPC_TYP, 1); // is this enough?
-                        qp = create_qp(proc_id, a_host_id, pd, service_type, temp_cq, temp_cq);
+                        // qpc_start_addr = cfg_agt.map_icm(host_id, `ICM_QPC_TYP, 1); // is this enough?
+                        qp = create_qp(proc_id, host_id, pd, service_type, temp_cq, temp_cq);
                     end
 
                     // create UC QPs
@@ -339,12 +338,12 @@ class test_direct_param extends uvm_test;
                         service_type = UC;
                         
                         // create CQ
-                        cqc_start_addr = cfg_agt.map_icm(a_host_id, `ICM_CQC_TYP, 1); // is this enough?
-                        temp_cq = create_cq(proc_id, a_host_id, pd);
+                        // cqc_start_addr = cfg_agt.map_icm(host_id, `ICM_CQC_TYP, 1); // is this enough?
+                        temp_cq = create_cq(proc_id, host_id, pd);
 
                         // create QP, should data MR be created here?
-                        qpc_start_addr = cfg_agt.map_icm(a_host_id, `ICM_QPC_TYP, 1); // is this enough?
-                        qp = create_qp(proc_id, a_host_id, pd, service_type, temp_cq, temp_cq);
+                        // qpc_start_addr = cfg_agt.map_icm(host_id, `ICM_QPC_TYP, 1); // is this enough?
+                        qp = create_qp(proc_id, host_id, pd, service_type, temp_cq, temp_cq);
                     end
 
                     // create UD QPs
@@ -353,12 +352,12 @@ class test_direct_param extends uvm_test;
                         service_type = UD;
                         
                         // create CQ
-                        cqc_start_addr = cfg_agt.map_icm(a_host_id, `ICM_CQC_TYP, 1); // is this enough?
-                        temp_cq = create_cq(proc_id, a_host_id, pd);
+                        // cqc_start_addr = cfg_agt.map_icm(host_id, `ICM_CQC_TYP, 1); // is this enough?
+                        temp_cq = create_cq(proc_id, host_id, pd);
 
                         // create QP, should data MR be created here?
-                        qpc_start_addr = cfg_agt.map_icm(a_host_id, `ICM_QPC_TYP, 1); // is this enough?
-                        qp = create_qp(proc_id, a_host_id, pd, service_type, temp_cq, temp_cq);
+                        // qpc_start_addr = cfg_agt.map_icm(host_id, `ICM_QPC_TYP, 1); // is this enough?
+                        qp = create_qp(proc_id, host_id, pd, service_type, temp_cq, temp_cq);
                     end
                 end
             join_none
@@ -380,7 +379,7 @@ class test_direct_param extends uvm_test;
                 for (int j = 0; j < q_list.qp_list[1].size(); j++) begin
                     if (q_list.qp_list[1][j].ctx.local_qpn == qp_a.ctx.local_qpn + 1) begin
                         qp_b = q_list.qp_list[1][j];
-                        connect_qp(0, qp_a, 1, qp_b);
+                        connect_qp(0, qp_a, 0, qp_b);
                         flag = 1;
                         break;
                     end
@@ -394,7 +393,7 @@ class test_direct_param extends uvm_test;
                 for (int j = 0; j < q_list.qp_list[1].size(); j++) begin
                     if (q_list.qp_list[1][j].ctx.local_qpn == qp_a.ctx.local_qpn - 1) begin
                         qp_b = q_list.qp_list[1][j];
-                        connect_qp(0, qp_a, 1, qp_b);
+                        connect_qp(0, qp_a, 0, qp_b);
                         flag = 1;
                         break;
                     end
@@ -541,12 +540,16 @@ class test_direct_param extends uvm_test;
         remote_qp = qp.remote_qp;
         // remote_qpn = remote_qp.ctx.local_qpn;
 
-
-        if (host_id == 0) begin
-            remote_host_id = 1;
+        if(host_num == 1) begin
+            remote_host_id = 0;
         end
         else begin
-            remote_host_id = 0;
+            if (host_id == 0) begin
+                remote_host_id = 1;
+            end
+            else begin
+                remote_host_id = 0;
+            end
         end
 
         // host 1 is not sender
@@ -860,9 +863,12 @@ class test_direct_param extends uvm_test;
         qp_start_vaddr = `VA_QP(qp_num);
         // create qp mr
         `uvm_info("NOTICE", $sformatf("before create mr, qp_num: %h, start_vaddr: %h", qp_num, qp_start_vaddr), UVM_LOW);
-        sq_mpt = create_mr(host_id, proc_id, 1024 * 512, qp_start_vaddr, pd, `PAGE_SIZE, TRUE, 8'b1000_0011);
-        rq_mpt = create_mr(host_id, proc_id, 1024 * 512, qp_start_vaddr + `SQ_RQ_GAP, pd, `PAGE_SIZE, TRUE, 8'b1000_0011);
+        sq_mpt = create_mr(host_id, proc_id, `VRF_SQ_BYTE_SIZE, qp_start_vaddr, pd, `PAGE_SIZE, TRUE, 8'b1000_0011);
+        rq_mpt = create_mr(host_id, proc_id, `VRF_RQ_BYTE_SIZE, qp_start_vaddr + `SQ_RQ_GAP, pd, `PAGE_SIZE, TRUE, 8'b1000_0011);
 
+        if (icm_vaddr.qpc_cap_left[host_id] < QPC_ENTRY_SZ) begin
+            cfg_agt.map_icm(host_id, `ICM_QPC_TYP, 1);
+        end
         // set QP context
         qpc.opt_param_mask = $urandom();
         qpc.flags[31:28] = 4'b0011;
@@ -913,8 +919,8 @@ class test_direct_param extends uvm_test;
         qp.host_id = host_id;
         qp.proc_id = proc_id;
         qp.mem = env.mem[host_id];
-        qp.sq_byte_size = 1024 * 512;
-        qp.rq_byte_size = 1024 * 512;
+        qp.sq_byte_size = `VRF_SQ_BYTE_SIZE;
+        qp.rq_byte_size = `VRF_RQ_BYTE_SIZE;
         // qp.sq_header = 0;
         // qp.sq_tail = 0;
         q_list.qp_list[host_id].push_back(qp);
@@ -949,6 +955,10 @@ class test_direct_param extends uvm_test;
         cqc.pd = cq_mpt.pd;
         cqc.lkey = cq_mpt.key;
         cqc.cqn = cqn;
+
+        if (icm_vaddr.cqc_cap_left[host_id] < `CQC_ENTRY_SZ) begin
+            cfg_agt.map_icm(host_id, `ICM_CQC_TYP, 1);
+        end
 
         cq = hca_comp_queue::type_id::create($sformatf("cq%0d", cqn));
         cq.ctx = cqc;
@@ -1011,7 +1021,9 @@ class test_direct_param extends uvm_test;
         end
 
         // set amount of pages for mtt in ICM space
-        if ((mtt_num + 1) % 512 == 0) begin
+        // Why mtt_num PLUS ONE?
+        // if ((mtt_num + 1) % 512 == 0) begin
+        if (mtt_num % 512 == 0) begin
             mtt_page_num = mtt_num / 512;
         end
         else begin
@@ -1019,10 +1031,14 @@ class test_direct_param extends uvm_test;
         end
 
         // allocate space for MTT in ICM space
-        mtt_icm_addr = cfg_agt.map_icm(host_id, `ICM_MTT_TYP, mtt_page_num);
+        if (icm_vaddr.mtt_cap_left[host_id] < mtt_num * 8) begin
+            mtt_icm_addr = cfg_agt.map_icm(host_id, `ICM_MTT_TYP, mtt_page_num);
+        end
 
         // allocate space for MPT in ICM space
-        mpt_icm_addr = cfg_agt.map_icm(host_id, `ICM_MPT_TYP, 1);
+        if (icm_vaddr.mpt_cap_left[host_id] < `MPT_ITEM_SIZE) begin
+            mpt_icm_addr = cfg_agt.map_icm(host_id, `ICM_MPT_TYP, 1);
+        end
 
         // write MTT entries of new MR
         // number of MTT entries should be no larger than 255, or otherwise configuration would fail

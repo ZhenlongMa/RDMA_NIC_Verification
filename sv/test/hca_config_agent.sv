@@ -83,6 +83,12 @@ class hca_config_agent extends uvm_object;
             `uvm_fatal("PAGE_NUM_ERROR", "illegal page_num in map_icm!");
         end
         if (m_type == `ICM_QPC_TYP) begin
+            icm_vaddr.qpc_page_mapped[host_id] += page_num;
+            qpc_cap_left += `PAGE_SIZE * page_num;
+            if (icm_vaddr.qpc_page_used[host_id] > icm_vaddr.qpc_page_limit) begin
+                `uvm_fatal("ICM_ERR", $sformatf("QPC ICM page num exceeds limitation! Page used: %0d", icm_vaddr.qpc_page_used[host_id]));
+            end
+
             temp_virt_addr = `QPC_OFFSET;
             foreach (icm_vaddr.qpc_virt_addr[host_id][i]) begin
                 if (icm_vaddr.qpc_virt_addr[host_id][i] == temp_virt_addr) begin
@@ -106,6 +112,12 @@ class hca_config_agent extends uvm_object;
             end
         end
         else if (m_type == `ICM_CQC_TYP) begin
+            icm_vaddr.cqc_page_mapped[host_id] += page_num;
+            cqc_cap_left += `PAGE_SIZE * page_num;
+            if (icm_vaddr.cqc_page_used[host_id] > icm_vaddr.cqc_page_limit) begin
+                `uvm_fatal("ICM_ERR", $sformatf("CQC ICM page num exceeds limitation! Page used: %0d", icm_vaddr.cqc_page_used[host_id]));
+            end
+
             temp_virt_addr = `CQC_OFFSET;
             foreach (icm_vaddr.cqc_virt_addr[host_id][i]) begin
                 if (icm_vaddr.cqc_virt_addr[host_id][i] == temp_virt_addr) begin
@@ -128,6 +140,12 @@ class hca_config_agent extends uvm_object;
             end
         end
         else if (m_type == `ICM_MPT_TYP) begin
+            icm_vaddr.mpt_page_mapped[host_id] += page_num;
+            mpt_cap_left += `PAGE_SIZE * page_num;
+            if (icm_vaddr.mpt_page_used[host_id] > icm_vaddr.mpt_page_limit) begin
+                `uvm_fatal("ICM_ERR", $sformatf("MPT ICM page num exceeds limitation! Page used: %0d", icm_vaddr.mpt_page_used[host_id]));
+            end
+
             temp_virt_addr = `MPT_OFFSET;
             foreach (icm_vaddr.mpt_virt_addr[host_id][i]) begin
                 if (icm_vaddr.mpt_virt_addr[host_id][i] == temp_virt_addr) begin
@@ -150,6 +168,12 @@ class hca_config_agent extends uvm_object;
             end
         end
         else if (m_type == `ICM_MTT_TYP) begin
+            icm_vaddr.mtt_page_mapped[host_id] += page_num;
+            mtt_cap_left += `PAGE_SIZE * page_num;
+            if (icm_vaddr.mtt_page_used[host_id] > icm_vaddr.mtt_page_limit) begin
+                `uvm_fatal("ICM_ERR", $sformatf("MTT ICM page num exceeds limitation! Page used: %0d", icm_vaddr.mtt_page_used[host_id]));
+            end
+
             temp_virt_addr = `MTT_OFFSET;
             foreach (icm_vaddr.mtt_virt_addr[host_id][i]) begin
                 if (icm_vaddr.mtt_virt_addr[host_id][i] == temp_virt_addr) begin
@@ -248,6 +272,11 @@ class hca_config_agent extends uvm_object;
     task sw2hw_cq(int host_id, cq_context cq_ctx);
         hca_pcie_item sw2hw_cq_item;
         bit [31:0] cqn;
+        icm_vaddr.cqc_cap_left[host_id] -= `CQC_ENTRY_SZ;
+        if (icm_vaddr.cqc_cap_left[host_id] < 0) begin
+            `uvm_fatal("ICM_ERR", $sformatf("ICM CAPACITY OUT!"));
+        end
+        
         sw2hw_cq_item = hca_pcie_item::type_id::create("sw2hw_cq_item");
         sw2hw_cq_item.cq_ctx = cq_ctx;
         cqn = cq_ctx.cqn;
@@ -266,6 +295,11 @@ class hca_config_agent extends uvm_object;
         addr phys_addr_pcie;
         mtt temp_mtt;
         addr temp_index;
+
+        icm_vaddr.mtt_cap_left[host_id] = icm_vaddr.mtt_cap_left[host_id] - page_num * 8;
+        if (icm_vaddr.mtt_cap_left[host_id] < 0) begin
+            `uvm_fatal("ICM_ERR", $sformatf("MTT capacity out!"));
+        end
 
         write_mtt_item = hca_pcie_item::type_id::create("write_mtt_item");
         assert(write_mtt_item.randomize() with {hcr_op == `CMD_WRITE_MTT; num_mtt == page_num;})
@@ -342,6 +376,11 @@ class hca_config_agent extends uvm_object;
     endtask: query_dev_lim
 
     task sw2hw_mpt(int host_id, mpt mpt_item);
+        icm_vaddr.mpt_cap_left[host_id] -= `MPT_ENTRY_SZ;
+        if (icm_vaddr.mpt_cap_left[host_id] < 0) begin
+            `uvm_fatal("ICM_ERR", $sformatf("MPT capacity out!"));
+        end
+
         pcie_item = hca_pcie_item::type_id::create("pcie_item");
         pcie_item.mpt_item = mpt_item;
         assert(pcie_item.randomize() with {hcr_op == `CMD_SW2HW_MPT;})

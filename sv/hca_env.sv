@@ -29,7 +29,7 @@
 //----------------------------------------------------------------------------------------
 class hca_env extends uvm_env;
     string test_name;
-    int host_num = 1;
+    int host_num;
     hca_vsequencer vsqr;
 
     hca_scoreboard scb;

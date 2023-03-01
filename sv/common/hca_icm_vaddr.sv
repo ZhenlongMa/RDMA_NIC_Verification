@@ -33,6 +33,21 @@ class hca_icm_vaddr extends uvm_object;
     addr mpt_virt_addr[][$];
     addr mtt_virt_addr[][$];
 
+    int qpc_page_limit[];
+    int cqc_page_limit[];
+    int mpt_page_limit[];
+    int mtt_page_limit[];
+
+    int qpc_page_mapped[];
+    int cqc_page_mapped[];
+    int mpt_page_mapped[];
+    int mtt_page_mapped[];
+
+    int qpc_cap_left[];
+    int cqc_cap_left[];
+    int mtt_cap_left[];
+    int mpt_cap_left[];
+
     `uvm_object_utils_begin(hca_icm_vaddr)
     `uvm_object_utils_end
 
@@ -52,6 +67,36 @@ class hca_icm_vaddr extends uvm_object;
         eqc_virt_addr = new[host_num];
         mpt_virt_addr = new[host_num];
         mtt_virt_addr = new[host_num];
+
+        qpc_page_mapped = new[host_num];
+        cqc_page_mapped = new[host_num];
+        mpt_page_mapped = new[host_num];
+        mtt_page_mapped = new[host_num];
+
+        qpc_page_limit = new[host_num];
+        cqc_page_limit = new[host_num];
+        mpt_page_limit = new[host_num];
+        mtt_page_limit = new[host_num];
+
+        qpc_cap_left = new[host_num];
+        cqc_cap_left = new[host_num];
+        mtt_cap_left = new[host_num];
+        mpt_cap_left = new[host_num];
+
+        for (int i = 0; i < host_num; i++) begin
+            qpc_page_mapped[i] = 0;
+            cqc_page_mapped[i] = 0;
+            mpt_page_mapped[i] = 0;
+            mtt_page_mapped[i] = 0;
+            qpc_page_limit[i] = `QPC_ICM_PAGE_LIMIT;
+            cqc_page_limit[i] = `CQC_ICM_PAGE_LIMIT;
+            mpt_page_limit[i] = `MPT_ICM_PAGE_LIMIT;
+            mtt_page_limit[i] = `MTT_ICM_PAGE_LIMIT;
+            qpc_cap_left[i] = 0;
+            cqc_cap_left[i] = 0;
+            mtt_cap_left[i] = 0;
+            mpt_cap_left[i] = 0;
+        end
     endfunction: init
 
     function add_icm_vaddr(int m_type, int page_num);

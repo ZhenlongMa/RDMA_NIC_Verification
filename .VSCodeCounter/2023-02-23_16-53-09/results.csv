@@ -1,0 +1,18 @@
+"filename", "language", "System Verilog", "Verilog", "comment", "blank", "total"
+"d:\系统互连组内工作\InfiniBand网卡\Code\hcatest_gitlab\tb_uvm\src\base_test.sv", "System Verilog", 42, 0, 3, 18, 63
+"d:\系统互连组内工作\InfiniBand网卡\Code\hcatest_gitlab\tb_uvm\src\base_vsequence.v", "Verilog", 0, 37, 0, 18, 55
+"d:\系统互连组内工作\InfiniBand网卡\Code\hcatest_gitlab\tb_uvm\src\base_vsequencer.v", "Verilog", 0, 21, 2, 8, 31
+"d:\系统互连组内工作\InfiniBand网卡\Code\hcatest_gitlab\tb_uvm\src\nic_env.sv", "System Verilog", 29, 0, 0, 12, 41
+"d:\系统互连组内工作\InfiniBand网卡\Code\hcatest_gitlab\tb_uvm\src\nic_interface.sv", "System Verilog", 302, 0, 91, 67, 460
+"d:\系统互连组内工作\InfiniBand网卡\Code\hcatest_gitlab\tb_uvm\src\rx_agent.sv", "System Verilog", 25, 0, 0, 13, 38
+"d:\系统互连组内工作\InfiniBand网卡\Code\hcatest_gitlab\tb_uvm\src\rx_driver.sv", "System Verilog", 291, 0, 31, 80, 402
+"d:\系统互连组内工作\InfiniBand网卡\Code\hcatest_gitlab\tb_uvm\src\rx_sequence.sv", "System Verilog", 34, 0, 12, 13, 59
+"d:\系统互连组内工作\InfiniBand网卡\Code\hcatest_gitlab\tb_uvm\src\rx_sequencer.sv", "System Verilog", 11, 0, 0, 5, 16
+"d:\系统互连组内工作\InfiniBand网卡\Code\hcatest_gitlab\tb_uvm\src\tb_top.sv", "System Verilog", 136, 0, 97, 48, 281
+"d:\系统互连组内工作\InfiniBand网卡\Code\hcatest_gitlab\tb_uvm\src\test_top.sv", "System Verilog", 505, 0, 87, 142, 734
+"d:\系统互连组内工作\InfiniBand网卡\Code\hcatest_gitlab\tb_uvm\src\transaction.sv", "System Verilog", 801, 0, 40, 167, 1008
+"d:\系统互连组内工作\InfiniBand网卡\Code\hcatest_gitlab\tb_uvm\src\tx_agent.sv", "System Verilog", 25, 0, 0, 13, 38
+"d:\系统互连组内工作\InfiniBand网卡\Code\hcatest_gitlab\tb_uvm\src\tx_driver.sv", "System Verilog", 361, 0, 34, 98, 493
+"d:\系统互连组内工作\InfiniBand网卡\Code\hcatest_gitlab\tb_uvm\src\tx_sequence.sv", "System Verilog", 33, 0, 2, 13, 48
+"d:\系统互连组内工作\InfiniBand网卡\Code\hcatest_gitlab\tb_uvm\src\tx_sequencer.sv", "System Verilog", 11, 0, 0, 5, 16
+"Total", "-", 2606, 58, 399, 720, 3783

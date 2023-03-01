@@ -44,96 +44,50 @@ module hca_tb_top #(
         .DMA_HEAD_WIDTH  (DMA_HEAD_WIDTH),
         .AXIS_TUSER_WIDTH(AXIS_TUSER_WIDTH),
         .PAGE_SIZE_LOG   (PAGE_SIZE_LOG)
-    ) hca_if_a();
-
-    hca_interface #(
-        .C_DATA_WIDTH    (C_DATA_WIDTH),
-        .KEEP_WIDTH      (`DATA_WIDTH / 32), // C_DATA_WIDTH /32
-        .DMA_HEAD_WIDTH  (DMA_HEAD_WIDTH),
-        .AXIS_TUSER_WIDTH(AXIS_TUSER_WIDTH),
-        .PAGE_SIZE_LOG   (PAGE_SIZE_LOG)
-    ) hca_if_b();
+    ) hca_if();
 
     hca_dut #(
         .C_DATA_WIDTH(C_DATA_WIDTH),         // RX/TX interface data width
         .KEEP_WIDTH  (`DATA_WIDTH / 32),
         .DMA_HEAD_WIDTH(DMA_HEAD_WIDTH)
     ) dut (
-        .a_sys_clk                          (hca_if_a.sys_clk               ),
-        .a_pcie_clk                         (hca_if_a.pcie_clk              ),
-        .a_rdma_clk                         (hca_if_a.rdma_clk              ),
-        .a_user_reset                       (hca_if_a.user_reset            ),
-        .a_user_lnk_up                      (hca_if_a.user_lnk_up           ),
-        .a_cmd_rst                          (hca_if_a.cmd_rst               ),
+        .sys_clk                          (hca_if.sys_clk               ),
+        .pcie_clk                         (hca_if.pcie_clk              ),
+        .rdma_clk                         (hca_if.rdma_clk              ),
+        .user_reset                       (hca_if.user_reset            ),
+        .user_lnk_up                      (hca_if.user_lnk_up           ),
+        .cmd_rst                          (hca_if.cmd_rst               ),
 
-        .a_cfg_max_payload                  (hca_if_a.cfg_max_payload       ),
-        .a_cfg_max_read_req                 (hca_if_a.cfg_max_read_req      ),
+        .cfg_max_payload                  (hca_if.cfg_max_payload       ),
+        .cfg_max_read_req                 (hca_if.cfg_max_read_req      ),
 
-        .a_s_axis_rq_tlast                  (hca_if_a.s_axis_rq_tlast_dut       ),
-        .a_s_axis_rq_tdata                  (hca_if_a.s_axis_rq_tdata_dut       ),
-        .a_s_axis_rq_tuser                  (hca_if_a.s_axis_rq_tuser_dut       ),
-        .a_s_axis_rq_tkeep                  (hca_if_a.s_axis_rq_tkeep_dut       ),
-        .a_s_axis_rq_tready                 (hca_if_a.s_axis_rq_tready_dut      ),
-        .a_s_axis_rq_tvalid                 (hca_if_a.s_axis_rq_tvalid_dut      ),
+        .s_axis_rq_tlast                  (hca_if.s_axis_rq_tlast_dut       ),
+        .s_axis_rq_tdata                  (hca_if.s_axis_rq_tdata_dut       ),
+        .s_axis_rq_tuser                  (hca_if.s_axis_rq_tuser_dut       ),
+        .s_axis_rq_tkeep                  (hca_if.s_axis_rq_tkeep_dut       ),
+        .s_axis_rq_tready                 (hca_if.s_axis_rq_tready_dut      ),
+        .s_axis_rq_tvalid                 (hca_if.s_axis_rq_tvalid_dut      ),
 
-        .a_m_axis_rc_tdata                  (hca_if_a.m_axis_rc_tdata_dut       ),
-        .a_m_axis_rc_tuser                  (hca_if_a.m_axis_rc_tuser_dut       ),
-        .a_m_axis_rc_tlast                  (hca_if_a.m_axis_rc_tlast_dut       ),
-        .a_m_axis_rc_tkeep                  (hca_if_a.m_axis_rc_tkeep_dut       ),
-        .a_m_axis_rc_tvalid                 (hca_if_a.m_axis_rc_tvalid_dut      ),
-        .a_m_axis_rc_tready                 (hca_if_a.m_axis_rc_tready_dut      ),
+        .m_axis_rc_tdata                  (hca_if.m_axis_rc_tdata_dut       ),
+        .m_axis_rc_tuser                  (hca_if.m_axis_rc_tuser_dut       ),
+        .m_axis_rc_tlast                  (hca_if.m_axis_rc_tlast_dut       ),
+        .m_axis_rc_tkeep                  (hca_if.m_axis_rc_tkeep_dut       ),
+        .m_axis_rc_tvalid                 (hca_if.m_axis_rc_tvalid_dut      ),
+        .m_axis_rc_tready                 (hca_if.m_axis_rc_tready_dut      ),
 
-        .a_m_axis_cq_tdata                  (hca_if_a.m_axis_cq_tdata_dut       ),
-        .a_m_axis_cq_tuser                  (hca_if_a.m_axis_cq_tuser_dut       ),
-        .a_m_axis_cq_tlast                  (hca_if_a.m_axis_cq_tlast_dut       ),
-        .a_m_axis_cq_tkeep                  (hca_if_a.m_axis_cq_tkeep_dut       ),
-        .a_m_axis_cq_tvalid                 (hca_if_a.m_axis_cq_tvalid_dut      ),
-        .a_m_axis_cq_tready                 (hca_if_a.m_axis_cq_tready_dut      ),
+        .m_axis_cq_tdata                  (hca_if.m_axis_cq_tdata_dut       ),
+        .m_axis_cq_tuser                  (hca_if.m_axis_cq_tuser_dut       ),
+        .m_axis_cq_tlast                  (hca_if.m_axis_cq_tlast_dut       ),
+        .m_axis_cq_tkeep                  (hca_if.m_axis_cq_tkeep_dut       ),
+        .m_axis_cq_tvalid                 (hca_if.m_axis_cq_tvalid_dut      ),
+        .m_axis_cq_tready                 (hca_if.m_axis_cq_tready_dut      ),
 
-        .a_s_axis_cc_tdata                  (hca_if_a.s_axis_cc_tdata_dut       ),
-        .a_s_axis_cc_tuser                  (hca_if_a.s_axis_cc_tuser_dut       ),
-        .a_s_axis_cc_tlast                  (hca_if_a.s_axis_cc_tlast_dut       ),
-        .a_s_axis_cc_tkeep                  (hca_if_a.s_axis_cc_tkeep_dut       ),
-        .a_s_axis_cc_tvalid                 (hca_if_a.s_axis_cc_tvalid_dut      ),
-        .a_s_axis_cc_tready                 (hca_if_a.s_axis_cc_tready_dut      ),
-
-        .b_sys_clk                          (hca_if_b.sys_clk                   ),
-        .b_pcie_clk                         (hca_if_b.pcie_clk                  ),
-        .b_rdma_clk                         (hca_if_b.rdma_clk                  ),
-        .b_user_reset                       (hca_if_b.user_reset                ),
-        .b_user_lnk_up                      (hca_if_b.user_lnk_up               ),
-        .b_cmd_rst                          (hca_if_b.cmd_rst                   ),
-
-        .b_cfg_max_payload                  (hca_if_b.cfg_max_payload       ),
-        .b_cfg_max_read_req                 (hca_if_b.cfg_max_read_req      ),
-
-        .b_s_axis_rq_tlast                  (hca_if_b.s_axis_rq_tlast_dut       ),
-        .b_s_axis_rq_tdata                  (hca_if_b.s_axis_rq_tdata_dut       ),
-        .b_s_axis_rq_tuser                  (hca_if_b.s_axis_rq_tuser_dut       ),
-        .b_s_axis_rq_tkeep                  (hca_if_b.s_axis_rq_tkeep_dut       ),
-        .b_s_axis_rq_tready                 (hca_if_b.s_axis_rq_tready_dut      ),
-        .b_s_axis_rq_tvalid                 (hca_if_b.s_axis_rq_tvalid_dut      ),
-
-        .b_m_axis_rc_tdata                  (hca_if_b.m_axis_rc_tdata_dut       ),
-        .b_m_axis_rc_tuser                  (hca_if_b.m_axis_rc_tuser_dut       ),
-        .b_m_axis_rc_tlast                  (hca_if_b.m_axis_rc_tlast_dut       ),
-        .b_m_axis_rc_tkeep                  (hca_if_b.m_axis_rc_tkeep_dut       ),
-        .b_m_axis_rc_tvalid                 (hca_if_b.m_axis_rc_tvalid_dut      ),
-        .b_m_axis_rc_tready                 (hca_if_b.m_axis_rc_tready_dut      ),
-
-        .b_m_axis_cq_tdata                  (hca_if_b.m_axis_cq_tdata_dut       ),
-        .b_m_axis_cq_tuser                  (hca_if_b.m_axis_cq_tuser_dut       ),
-        .b_m_axis_cq_tlast                  (hca_if_b.m_axis_cq_tlast_dut       ),
-        .b_m_axis_cq_tkeep                  (hca_if_b.m_axis_cq_tkeep_dut       ),
-        .b_m_axis_cq_tvalid                 (hca_if_b.m_axis_cq_tvalid_dut      ),
-        .b_m_axis_cq_tready                 (hca_if_b.m_axis_cq_tready_dut      ),
-
-        .b_s_axis_cc_tdata                  (hca_if_b.s_axis_cc_tdata_dut       ),
-        .b_s_axis_cc_tuser                  (hca_if_b.s_axis_cc_tuser_dut       ),
-        .b_s_axis_cc_tlast                  (hca_if_b.s_axis_cc_tlast_dut       ),
-        .b_s_axis_cc_tkeep                  (hca_if_b.s_axis_cc_tkeep_dut       ),
-        .b_s_axis_cc_tvalid                 (hca_if_b.s_axis_cc_tvalid_dut      ),
-        .b_s_axis_cc_tready                 (hca_if_b.s_axis_cc_tready_dut      )
+        .s_axis_cc_tdata                  (hca_if.s_axis_cc_tdata_dut       ),
+        .s_axis_cc_tuser                  (hca_if.s_axis_cc_tuser_dut       ),
+        .s_axis_cc_tlast                  (hca_if.s_axis_cc_tlast_dut       ),
+        .s_axis_cc_tkeep                  (hca_if.s_axis_cc_tkeep_dut       ),
+        .s_axis_cc_tvalid                 (hca_if.s_axis_cc_tvalid_dut      ),
+        .s_axis_cc_tready                 (hca_if.s_axis_cc_tready_dut      )
     );
 
     function string get_time();
@@ -195,72 +149,39 @@ module hca_tb_top #(
     end
 
     initial begin
-        uvm_config_db#(virtual hca_interface)::set(uvm_root::get(), "*.env.sub_env[0]*", "virtual_if", hca_if_a);
-        uvm_config_db#(virtual hca_interface)::set(uvm_root::get(), "*.env.sub_env[1]*", "virtual_if", hca_if_b);
+        uvm_config_db#(virtual hca_interface)::set(uvm_root::get(), "*.env.sub_env[0]*", "virtual_if", hca_if);
     end
 
     initial begin
-        hca_if_a.user_reset   <= 1'b1;
-        hca_if_a.user_lnk_up  <= 1'b0;
-        hca_if_a.veri_en      <= 1'b0;
-        hca_if_a.global_stop  <= 1'b0;
+        hca_if.user_reset   <= 1'b1;
+        hca_if.user_lnk_up  <= 1'b0;
+        hca_if.veri_en      <= 1'b0;
+        hca_if.global_stop  <= 1'b0;
         # `RST_DELAY;
-        hca_if_a.user_reset   <= 1'b0;
-        hca_if_a.user_lnk_up  <= 1'b1;
+        hca_if.user_reset   <= 1'b0;
+        hca_if.user_lnk_up  <= 1'b1;
         `uvm_info("NOTICE", "reset finished...", UVM_LOW)
         # `AFTER_RST_DELAY;
         `uvm_info("NOTICE", "verification enabled...", UVM_LOW)
-        hca_if_a.veri_en      <= 1'b1;
+        hca_if.veri_en      <= 1'b1;
     end
 
     initial begin
-        hca_if_b.user_reset   <= 1'b1;
-        hca_if_b.user_lnk_up  <= 1'b0;
-        hca_if_b.veri_en      <= 1'b0;
-        hca_if_b.global_stop  <= 1'b0;
-        # `RST_DELAY;
-        hca_if_b.user_reset   <= 1'b0;
-        hca_if_b.user_lnk_up  <= 1'b1;
-        `uvm_info("NOTICE", "reset finished...", UVM_LOW);
-        # `AFTER_RST_DELAY;
-        `uvm_info("NOTICE", "verification enabled...", UVM_LOW);
-        hca_if_b.veri_en      <= 1'b1;
-    end
+        hca_if.m_axis_cq_tdata      <= 1'b0;
+        hca_if.m_axis_cq_tuser      <= 1'b0;
+        hca_if.m_axis_cq_tlast      <= 1'b0;
+        hca_if.m_axis_cq_tkeep      <= 1'b0;
+        hca_if.m_axis_cq_tvalid     <= 1'b0;
 
-    initial begin
-        hca_if_a.m_axis_cq_tdata      <= 1'b0;
-        hca_if_a.m_axis_cq_tuser      <= 1'b0;
-        hca_if_a.m_axis_cq_tlast      <= 1'b0;
-        hca_if_a.m_axis_cq_tkeep      <= 1'b0;
-        hca_if_a.m_axis_cq_tvalid     <= 1'b0;
+        hca_if.s_axis_cc_tready     <= 1'b0;
 
-        hca_if_a.s_axis_cc_tready     <= 1'b0;
+        hca_if.m_axis_rc_tdata      <= 1'b0;
+        hca_if.m_axis_rc_tuser      <= 1'b0;
+        hca_if.m_axis_rc_tlast      <= 1'b0;
+        hca_if.m_axis_rc_tkeep      <= 1'b0;
+        hca_if.m_axis_rc_tvalid     <= 1'b0;
 
-        hca_if_a.m_axis_rc_tdata      <= 1'b0;
-        hca_if_a.m_axis_rc_tuser      <= 1'b0;
-        hca_if_a.m_axis_rc_tlast      <= 1'b0;
-        hca_if_a.m_axis_rc_tkeep      <= 1'b0;
-        hca_if_a.m_axis_rc_tvalid     <= 1'b0;
-
-        hca_if_a.s_axis_rq_tready     <= 1'b0;
-    end
-
-    initial begin
-        hca_if_b.m_axis_cq_tdata      <= 1'b0;
-        hca_if_b.m_axis_cq_tuser      <= 1'b0;
-        hca_if_b.m_axis_cq_tlast      <= 1'b0;
-        hca_if_b.m_axis_cq_tkeep      <= 1'b0;
-        hca_if_b.m_axis_cq_tvalid     <= 1'b0;
-
-        hca_if_b.s_axis_cc_tready     <= 1'b0;
-
-        hca_if_b.m_axis_rc_tdata      <= 1'b0;
-        hca_if_b.m_axis_rc_tuser      <= 1'b0;
-        hca_if_b.m_axis_rc_tlast      <= 1'b0;
-        hca_if_b.m_axis_rc_tkeep      <= 1'b0;
-        hca_if_b.m_axis_rc_tvalid     <= 1'b0;
-
-        hca_if_b.s_axis_rq_tready     <= 1'b0;
+        hca_if.s_axis_rq_tready     <= 1'b0;
     end
 
     initial begin
@@ -279,27 +200,21 @@ module hca_tb_top #(
 
     // clock driver
     initial begin
-        hca_if_a.sys_clk      <= 1'b1;
-        hca_if_a.pcie_clk     <= 1'b1;
-        hca_if_a.rdma_clk     <= 1'b1;
-        hca_if_b.sys_clk      <= 1'b1;
-        hca_if_b.pcie_clk     <= 1'b1;
-        hca_if_b.rdma_clk     <= 1'b1;
+        hca_if.sys_clk      <= 1'b1;
+        hca_if.pcie_clk     <= 1'b1;
+        hca_if.rdma_clk     <= 1'b1;
     end
     always begin
         #(`PCIE_CLK_PERIOD / 2);
-        hca_if_a.pcie_clk     <= ~hca_if_a.pcie_clk;
-        hca_if_b.pcie_clk     <= ~hca_if_b.pcie_clk;
+        hca_if.pcie_clk     <= ~hca_if.pcie_clk;
     end
     always begin
         #(`RDMA_CLK_PERIOD / 2);
-        hca_if_a.sys_clk      <= ~hca_if_a.sys_clk;
-        hca_if_b.sys_clk      <= ~hca_if_b.sys_clk;
+        hca_if.sys_clk      <= ~hca_if.sys_clk;
     end
     always begin
         #(`RDMA_CLK_PERIOD / 2);
-        hca_if_a.rdma_clk      <= ~hca_if_a.rdma_clk;
-        hca_if_b.rdma_clk      <= ~hca_if_b.rdma_clk;
+        hca_if.rdma_clk      <= ~hca_if.rdma_clk;
     end
 
     // initial begin
@@ -324,10 +239,8 @@ module hca_tb_top #(
         * 3'b100 -- 2048B
         * 3'b101 -- 4096B
         */
-        hca_if_a.cfg_max_payload                     <= `MAX_PAYLOAD;
-        hca_if_a.cfg_max_read_req                    <= `MAX_READ_REQ;
-        hca_if_b.cfg_max_payload                     <= `MAX_PAYLOAD;
-        hca_if_b.cfg_max_read_req                    <= `MAX_READ_REQ;
+        hca_if.cfg_max_payload                     <= `MAX_PAYLOAD;
+        hca_if.cfg_max_read_req                    <= `MAX_READ_REQ;
     end
 endmodule: hca_tb_top
 `endif
