@@ -32,6 +32,7 @@ class test_direct_param extends uvm_test;
     // string comm_type;
     string data_unit;
     hca_env env;
+    testbench_env_wmac mac_env;
     hca_vsequence vseq;
     hca_pcie_item pcie_item;
     hca_fifo #(.width(256)) data_fifo;
@@ -187,6 +188,8 @@ class test_direct_param extends uvm_test;
 
         env = hca_env::type_id::create("env", this);
         env.host_num = this.host_num;
+        mac_env = testbench_env_wmac::type_id::create("mac_env", this);
+        
         vseq = hca_vsequence::type_id::create("vseq", this);
         vseq.init(this.host_num);
         data_fifo = hca_fifo#(.width(256))::type_id::create("data_fifo");
