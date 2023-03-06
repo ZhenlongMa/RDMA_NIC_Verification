@@ -84,8 +84,8 @@ class hca_config_agent extends uvm_object;
         end
         if (m_type == `ICM_QPC_TYP) begin
             icm_vaddr.qpc_page_mapped[host_id] += page_num;
-            qpc_cap_left += `PAGE_SIZE * page_num;
-            if (icm_vaddr.qpc_page_mapped[host_id] > icm_vaddr.qpc_page_limit) begin
+            icm_vaddr.qpc_cap_left[host_id] += `PAGE_SIZE * page_num;
+            if (icm_vaddr.qpc_page_mapped[host_id] > icm_vaddr.qpc_page_limit[host_id]) begin
                 `uvm_fatal("ICM_ERR", $sformatf("QPC ICM page num exceeds limitation! Page used: %0d", icm_vaddr.qpc_page_mapped[host_id]));
             end
 
@@ -113,8 +113,8 @@ class hca_config_agent extends uvm_object;
         end
         else if (m_type == `ICM_CQC_TYP) begin
             icm_vaddr.cqc_page_mapped[host_id] += page_num;
-            cqc_cap_left += `PAGE_SIZE * page_num;
-            if (icm_vaddr.cqc_page_mapped[host_id] > icm_vaddr.cqc_page_limit) begin
+            icm_vaddr.cqc_cap_left[host_id] += `PAGE_SIZE * page_num;
+            if (icm_vaddr.cqc_page_mapped[host_id] > icm_vaddr.cqc_page_limit[host_id]) begin
                 `uvm_fatal("ICM_ERR", $sformatf("CQC ICM page num exceeds limitation! Page used: %0d", icm_vaddr.cqc_page_mapped[host_id]));
             end
 
@@ -141,8 +141,8 @@ class hca_config_agent extends uvm_object;
         end
         else if (m_type == `ICM_MPT_TYP) begin
             icm_vaddr.mpt_page_mapped[host_id] += page_num;
-            mpt_cap_left += `PAGE_SIZE * page_num;
-            if (icm_vaddr.mpt_page_mapped[host_id] > icm_vaddr.mpt_page_limit) begin
+            icm_vaddr.mpt_cap_left[host_id] += `PAGE_SIZE * page_num;
+            if (icm_vaddr.mpt_page_mapped[host_id] > icm_vaddr.mpt_page_limit[host_id]) begin
                 `uvm_fatal("ICM_ERR", $sformatf("MPT ICM page num exceeds limitation! Page used: %0d", icm_vaddr.mpt_page_mapped[host_id]));
             end
 
@@ -169,8 +169,8 @@ class hca_config_agent extends uvm_object;
         end
         else if (m_type == `ICM_MTT_TYP) begin
             icm_vaddr.mtt_page_mapped[host_id] += page_num;
-            mtt_cap_left += `PAGE_SIZE * page_num;
-            if (icm_vaddr.mtt_page_mapped[host_id] > icm_vaddr.mtt_page_limit) begin
+            icm_vaddr.mtt_cap_left[host_id] += `PAGE_SIZE * page_num;
+            if (icm_vaddr.mtt_page_mapped[host_id] > icm_vaddr.mtt_page_limit[host_id]) begin
                 `uvm_fatal("ICM_ERR", $sformatf("MTT ICM page num exceeds limitation! Page used: %0d", icm_vaddr.mtt_page_mapped[host_id]));
             end
 

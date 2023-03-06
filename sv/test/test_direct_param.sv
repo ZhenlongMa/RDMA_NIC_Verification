@@ -325,11 +325,11 @@ class test_direct_param extends uvm_test;
 
                         // create CQ
                         // cqc_start_addr = cfg_agt.map_icm(host_id, `ICM_CQC_TYP, 1); // is this enough?
-                        temp_cq = create_cq(proc_id, host_id, pd);
+                        temp_cq = create_cq(proc_id, a_host_id, pd);
 
                         // create QP, should data MR be created here?
                         // qpc_start_addr = cfg_agt.map_icm(host_id, `ICM_QPC_TYP, 1); // is this enough?
-                        qp = create_qp(proc_id, host_id, pd, service_type, temp_cq, temp_cq);
+                        qp = create_qp(proc_id, a_host_id, pd, service_type, temp_cq, temp_cq);
                     end
 
                     // create UC QPs
@@ -339,11 +339,11 @@ class test_direct_param extends uvm_test;
                         
                         // create CQ
                         // cqc_start_addr = cfg_agt.map_icm(host_id, `ICM_CQC_TYP, 1); // is this enough?
-                        temp_cq = create_cq(proc_id, host_id, pd);
+                        temp_cq = create_cq(proc_id, a_host_id, pd);
 
                         // create QP, should data MR be created here?
                         // qpc_start_addr = cfg_agt.map_icm(host_id, `ICM_QPC_TYP, 1); // is this enough?
-                        qp = create_qp(proc_id, host_id, pd, service_type, temp_cq, temp_cq);
+                        qp = create_qp(proc_id, a_host_id, pd, service_type, temp_cq, temp_cq);
                     end
 
                     // create UD QPs
@@ -353,11 +353,11 @@ class test_direct_param extends uvm_test;
                         
                         // create CQ
                         // cqc_start_addr = cfg_agt.map_icm(host_id, `ICM_CQC_TYP, 1); // is this enough?
-                        temp_cq = create_cq(proc_id, host_id, pd);
+                        temp_cq = create_cq(proc_id, a_host_id, pd);
 
                         // create QP, should data MR be created here?
                         // qpc_start_addr = cfg_agt.map_icm(host_id, `ICM_QPC_TYP, 1); // is this enough?
-                        qp = create_qp(proc_id, host_id, pd, service_type, temp_cq, temp_cq);
+                        qp = create_qp(proc_id, a_host_id, pd, service_type, temp_cq, temp_cq);
                     end
                 end
             join_none
@@ -376,9 +376,9 @@ class test_direct_param extends uvm_test;
             //     continue;
             // end
             if (qp_a.ctx.local_qpn % 2 == 0) begin
-                for (int j = 0; j < q_list.qp_list[1].size(); j++) begin
-                    if (q_list.qp_list[1][j].ctx.local_qpn == qp_a.ctx.local_qpn + 1) begin
-                        qp_b = q_list.qp_list[1][j];
+                for (int j = 0; j < q_list.qp_list[0].size(); j++) begin
+                    if (q_list.qp_list[0][j].ctx.local_qpn == qp_a.ctx.local_qpn + 1) begin
+                        qp_b = q_list.qp_list[0][j];
                         connect_qp(0, qp_a, 0, qp_b);
                         flag = 1;
                         break;
@@ -390,9 +390,9 @@ class test_direct_param extends uvm_test;
                 end
             end
             else begin
-                for (int j = 0; j < q_list.qp_list[1].size(); j++) begin
-                    if (q_list.qp_list[1][j].ctx.local_qpn == qp_a.ctx.local_qpn - 1) begin
-                        qp_b = q_list.qp_list[1][j];
+                for (int j = 0; j < q_list.qp_list[0].size(); j++) begin
+                    if (q_list.qp_list[0][j].ctx.local_qpn == qp_a.ctx.local_qpn - 1) begin
+                        qp_b = q_list.qp_list[0][j];
                         connect_qp(0, qp_a, 0, qp_b);
                         flag = 1;
                         break;
@@ -866,7 +866,7 @@ class test_direct_param extends uvm_test;
         sq_mpt = create_mr(host_id, proc_id, `VRF_SQ_BYTE_SIZE, qp_start_vaddr, pd, `PAGE_SIZE, TRUE, 8'b1000_0011);
         rq_mpt = create_mr(host_id, proc_id, `VRF_RQ_BYTE_SIZE, qp_start_vaddr + `SQ_RQ_GAP, pd, `PAGE_SIZE, TRUE, 8'b1000_0011);
 
-        if (icm_vaddr.qpc_cap_left[host_id] < QPC_ENTRY_SZ) begin
+        if (icm_vaddr.qpc_cap_left[host_id] < `QPC_ENTRY_SZ) begin
             cfg_agt.map_icm(host_id, `ICM_QPC_TYP, 1);
         end
         // set QP context
