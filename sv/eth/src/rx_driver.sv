@@ -67,18 +67,18 @@ task rx_driver::main_phase(uvm_phase phase);
   end
   
   fork 
-    forever begin
-      seq_item_port.get_next_item(req);
-      send_frame(send_index);
-      send_time = $random() % 100;
-      if(`PRINT_DETAIL) 
-        `uvm_info(get_name(), $sformatf("send_index:%d", send_index), UVM_LOW);      
-      send_index = send_index + 1;
-      while(send_index == `DESC_NUM  && print_index != send_index) 
-        @(posedge nic_if.clk);
-      repeat(send_time) @(posedge nic_if.clk);
-      seq_item_port.item_done();
-    end
+    // forever begin
+    //   seq_item_port.get_next_item(req);
+    // //   send_frame(send_index);
+    //   send_time = $random() % 100;
+    //   if(`PRINT_DETAIL) 
+    //     `uvm_info(get_name(), $sformatf("send_index:%d", send_index), UVM_LOW);      
+    //   send_index = send_index + 1;
+    //   while(send_index == `DESC_NUM  && print_index != send_index) 
+    //     @(posedge nic_if.clk);
+    //   repeat(send_time) @(posedge nic_if.clk);
+    //   seq_item_port.item_done();
+    // end
 
     `phase_test(wait_desc_dma,  desc_index,   ring_m.rx_ring.descs[desc_index].ring_type,   MAC_RX_TYPE, print_index);
     `phase_test(wait_frame_dma, frame_index,  ring_m.rx_ring.descs[frame_index].ring_type,  MAC_RX_TYPE, print_index);

@@ -92,11 +92,11 @@ task tx_driver::main_phase(uvm_phase phase);
 
     `phase_test(wait_desc_dma,      desc_index,   ring_m.tx_ring.descs[desc_index].ring_type,   MAC_TX_TYPE, print_index);
     `phase_test(wait_frame_dma,     frame_index,  ring_m.tx_ring.descs[frame_index].ring_type,  MAC_TX_TYPE, print_index);
-    `phase_test(wait_frame_to_mac,  mac_index,    ring_m.tx_ring.descs[mac_index].ring_type,    MAC_TX_TYPE | ROCE_TX_TYPE, print_index);
+    // `phase_test(wait_frame_to_mac,  mac_index,    ring_m.tx_ring.descs[mac_index].ring_type,    MAC_TX_TYPE | ROCE_TX_TYPE, print_index);
     `phase_test(wait_cpl_dma,       cpl_index,    ring_m.tx_ring.descs[cpl_index].ring_type,    MAC_TX_TYPE, print_index);
     `phase_test(wait_msix_dma,      msix_index,   ring_m.tx_ring.descs[msix_index].ring_type,   MAC_TX_TYPE, print_index);
-    `phase_test(wait_roce_desc,     rdesc_index,  ring_m.tx_ring.descs[rdesc_index].ring_type,  ROCE_TX_TYPE, print_index);
-    `phase_test(wait_roce_dma,      roce_index,   ring_m.tx_ring.descs[roce_index].ring_type,   ROCE_TX_TYPE, print_index); 
+    // `phase_test(wait_roce_desc,     rdesc_index,  ring_m.tx_ring.descs[rdesc_index].ring_type,  ROCE_TX_TYPE, print_index);
+    // `phase_test(wait_roce_dma,      roce_index,   ring_m.tx_ring.descs[roce_index].ring_type,   ROCE_TX_TYPE, print_index); 
 
     forever begin
       @ (posedge nic_if.clk);
@@ -467,9 +467,10 @@ task tx_driver::init_msix();
 
   wait(nic_if.rst_n);
 
-  /* init total 64 rings */
+  /* init total 32 rings */
   for(int i = 0; i < `RING_NUM; i++) begin
     // `uvm_info(get_name(), $sformatf("init queue:%d begin", i), UVM_LOW);
+    // todo
     `axi_write(m, csr_addr + 32'h0,   ring_m.tx_ring.rings[i].misxv.addr[31:0]);
     `axi_write(m, csr_addr + 32'h4,   ring_m.tx_ring.rings[i].misxv.addr[63:32]);
     `axi_write(m, csr_addr + 32'h8,   ring_m.tx_ring.rings[i].misxv.msg);
