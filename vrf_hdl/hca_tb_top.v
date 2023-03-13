@@ -36,7 +36,7 @@ module hca_tb_top #(
     parameter AXIS_TUSER_WIDTH = 128,
     parameter PAGE_SIZE_LOG = 12
 );
-    import uvm_pkg::*; // this line can be deleted with everything doing well, no idea about this.
+    import uvm_pkg::*; // this line can be deleted with everything going well, no idea about this.
     
     hca_interface #(
         .C_DATA_WIDTH    (C_DATA_WIDTH),
@@ -54,11 +54,25 @@ module hca_tb_top #(
         .PAGE_SIZE_LOG   (PAGE_SIZE_LOG)
     ) hca_if_b();
 
-    hca_dut #(
+    hca_dut_modify #(
         .C_DATA_WIDTH(C_DATA_WIDTH),         // RX/TX interface data width
         .KEEP_WIDTH  (`DATA_WIDTH / 32),
         .DMA_HEAD_WIDTH(DMA_HEAD_WIDTH)
     ) dut (
+        .nic_rst_n                          (~hca_if_a.user_reset),
+        .nic_clk                            (hca_if_a.rdma_clk),
+        .mgmt_clk                           (hca_if_a.rdma_clk),
+        .mgmt_rst_n                         (~hca_if_a.user_reset),
+        .link_clk                           (hca_if_a.rdma_clk),
+        .link_rst_n                         (~hca_if_a.user_reset),
+        .cpu_clk_i                          (hca_if_a.rdma_clk),
+        .sys_npor                           (0),
+
+        .axis_clk_0                         (),
+        .axis_rst_n_0                       (),
+        .axis_clk_1                         (),
+        .axis_rst_n_1                       (),
+
         .a_sys_clk                          (hca_if_a.sys_clk               ),
         .a_pcie_clk                         (hca_if_a.pcie_clk              ),
         .a_rdma_clk                         (hca_if_a.rdma_clk              ),
@@ -182,6 +196,7 @@ module hca_tb_top #(
 
         // if UVM_FATAL is produced, get system time in catcher
         uvm_report_cb::add(null, catcher);
+        `uvm_info("TIME_INFO", $sformatf("TEST BEGIN!!", end_time), UVM_LOW);
         run_test();
 
         // if verification ends successfully, get system time here

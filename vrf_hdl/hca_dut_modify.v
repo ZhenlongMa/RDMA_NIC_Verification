@@ -1,4 +1,6 @@
-module pcie_engine_link_top#(
+`include "svt_apb_if.svi"
+`include "apb_reset_if.svi"
+module hca_dut_modify#(
 //engine_top PARAMETER
     //NIC_TOP PARAMETERS
     parameter          C_DATA_WIDTH                        = 256,         // RX/TX interface data width
@@ -26,14 +28,14 @@ module pcie_engine_link_top#(
     parameter 			RW_REG_NUM 						= 128,
     parameter 			RO_REG_NUM 						= 128,
     //HOSTROUTE PARAMETERS
-	parameter PORT_NUM_LOG_2 = 32'd4,
-	parameter PORT_INDEX = 32'd0,
-	parameter PORT_NUM = 32'd16,
-	parameter QUEUE_DEPTH_LOG_2 = 10, 	//Maximum depth of one output queue is (1 << QUEUE_DEPTH)
+    parameter PORT_NUM_LOG_2 = 32'd4,
+    parameter PORT_INDEX = 32'd0,
+    parameter PORT_NUM = 32'd16,
+    parameter QUEUE_DEPTH_LOG_2 = 10, 	//Maximum depth of one output queue is (1 << QUEUE_DEPTH)
 
         //Route Cfg Parameter
-	parameter ROUTE_RO_REG_NUM = 32,
-	parameter ROUTE_RW_REG_NUM = 32,
+    parameter ROUTE_RO_REG_NUM = 32,
+    parameter ROUTE_RW_REG_NUM = 32,
 
         //NIC Cfg Parameter
     parameter NIC_RO_REG_NUM = 128,
@@ -45,11 +47,11 @@ module pcie_engine_link_top#(
 
         //Cfg Node Parameter
     parameter CFG_NODE_REG_BASE_ADDR  = 24'h10_0000,//
-	parameter CFG_NODE_RW_REG_NUM = ROUTE_RW_REG_NUM + NIC_RW_REG_NUM + LINK_RW_REG_NUM + 32'd1,//read-writer register number,register data witdh is 32bit,
-	parameter CFG_NODE_RO_BASE_ADDR  = 24'h30_0000,//configuration read only register base address  //
-	parameter CFG_NODE_RO_REG_NUM = ROUTE_RO_REG_NUM + NIC_RO_REG_NUM + LINK_RO_REG_NUM + 32'd3, //read-only register number,register data witdh is 32bit, SUM max is 14'h3fff-3
-	parameter CFG_NODE_BUS_BASE_ADDR  = 24'h70_0000, ////configuration bus base address	 //
-	parameter CFG_NODE_BUS_ADDR_WIDTH = 0,
+    parameter CFG_NODE_RW_REG_NUM = ROUTE_RW_REG_NUM + NIC_RW_REG_NUM + LINK_RW_REG_NUM + 32'd1,//read-writer register number,register data witdh is 32bit,
+    parameter CFG_NODE_RO_BASE_ADDR  = 24'h30_0000,//configuration read only register base address  //
+    parameter CFG_NODE_RO_REG_NUM = ROUTE_RO_REG_NUM + NIC_RO_REG_NUM + LINK_RO_REG_NUM + 32'd3, //read-only register number,register data witdh is 32bit, SUM max is 14'h3fff-3
+    parameter CFG_NODE_BUS_BASE_ADDR  = 24'h70_0000, ////configuration bus base address	 //
+    parameter CFG_NODE_BUS_ADDR_WIDTH = 0,
 
         //Phy cfg parameter
     parameter APB_SEL = 1'b0,
@@ -87,6 +89,13 @@ module pcie_engine_link_top#(
     //----------------------------------------------------------
     //  Host A RDMA Interface                           
     //----------------------------------------------------------
+    input                                        a_sys_clk,
+    input                                        a_pcie_clk,
+    input                                        a_rdma_clk,
+    input                                        a_user_reset,
+    input                                        a_user_lnk_up,
+    output                                       a_cmd_rst,
+
     input                              [2:0]     a_cfg_max_payload,
     input                              [2:0]     a_cfg_max_read_req,
 
@@ -161,7 +170,7 @@ module pcie_engine_link_top#(
 
 
 );
-
+    import uvm_pkg::*;
     //HPC Traffic in
        wire												    i_link_hpc_pkt_valid_0;
        wire 												i_link_hpc_pkt_start_0;
@@ -438,118 +447,118 @@ module pcie_engine_link_top#(
         wire                                                         app_clk;//900MHZ
 
 
-        assign cc_tdata_0   =  s_axis_cc_tdata_0;   
-        assign cc_tkeep_0   =  s_axis_cc_tkeep_0 ;   
-        assign cc_tuser_0   =  s_axis_cc_tuser_0 ;   
-        assign cc_tvalid_0  =  s_axis_cc_tvalid_0 ;   
-        assign cc_tlast_0   =  s_axis_cc_tlast_0 ;   
-        assign s_axis_cc_tready_0 = cc_tready_0; 
+        // assign cc_tdata_0   =  s_axis_cc_tdata_0;   
+        // assign cc_tkeep_0   =  s_axis_cc_tkeep_0 ;   
+        // assign cc_tuser_0   =  s_axis_cc_tuser_0 ;   
+        // assign cc_tvalid_0  =  s_axis_cc_tvalid_0 ;   
+        // assign cc_tlast_0   =  s_axis_cc_tlast_0 ;   
+        // assign s_axis_cc_tready_0 = cc_tready_0; 
 
-        assign rq_tdata_0   = s_axis_rq_tdata_0;
-        assign rq_tkeep_0   = s_axis_rq_tkeep_0 ;
-        assign rq_tuser_0   = s_axis_rq_tuser_0 ;
-        assign rq_tvalid_0  = s_axis_rq_tvalid_0 ;
-        assign rq_tlast_0   = s_axis_rq_tlast_0 ;
-        assign s_axis_rq_tready_0 = rq_tready_0;
+        // assign rq_tdata_0   = s_axis_rq_tdata_0;
+        // assign rq_tkeep_0   = s_axis_rq_tkeep_0 ;
+        // assign rq_tuser_0   = s_axis_rq_tuser_0 ;
+        // assign rq_tvalid_0  = s_axis_rq_tvalid_0 ;
+        // assign rq_tlast_0   = s_axis_rq_tlast_0 ;
+        // assign s_axis_rq_tready_0 = rq_tready_0;
 
-        assign m_axis_cq_tvalid_0 =  cq_tvalid_0  ;
-        assign m_axis_cq_tlast_0  =  cq_tlast_0  ;
-        assign m_axis_cq_tkeep_0  =  cq_tkeep_0  ;
-        assign m_axis_cq_tuser_0  =  cq_tuser_0 ;
-        assign m_axis_cq_tdata_0  =  cq_tdata_0  ;
-        assign cq_tready_0 = m_axis_cq_tready_0;
+        // assign m_axis_cq_tvalid_0 =  cq_tvalid_0  ;
+        // assign m_axis_cq_tlast_0  =  cq_tlast_0  ;
+        // assign m_axis_cq_tkeep_0  =  cq_tkeep_0  ;
+        // assign m_axis_cq_tuser_0  =  cq_tuser_0 ;
+        // assign m_axis_cq_tdata_0  =  cq_tdata_0  ;
+        // assign cq_tready_0 = m_axis_cq_tready_0;
 
-        assign m_axis_rc_tvalid_0  = rc_tvalid_0 ;
-        assign m_axis_rc_tlast_0   = rc_tlast_0 ;
-        assign m_axis_rc_tkeep_0   = rc_tkeep_0 ;
-        assign m_axis_rc_tuser_0   = rc_tuser_0;
-        assign m_axis_rc_tdata_0   = rc_tdata_0 ;
-        assign rc_tready_0 = m_axis_rc_tready_0;
+        // assign m_axis_rc_tvalid_0  = rc_tvalid_0 ;
+        // assign m_axis_rc_tlast_0   = rc_tlast_0 ;
+        // assign m_axis_rc_tkeep_0   = rc_tkeep_0 ;
+        // assign m_axis_rc_tuser_0   = rc_tuser_0;
+        // assign m_axis_rc_tdata_0   = rc_tdata_0 ;
+        // assign rc_tready_0 = m_axis_rc_tready_0;
 
 
-        assign axis_rq_tvalid_obsv_0  =  s_axis_rq_tvalid_0;
-        assign axis_rq_tlast_obsv_0   =  s_axis_rq_tlast_0 ;
-        assign axis_rq_tkeep_obsv_0   =  s_axis_rq_tkeep_0 ;
-        assign axis_rq_tuser_obsv_0   =  s_axis_rq_tuser_0 ;
-        assign axis_rq_tdata_obsv_0   =  s_axis_rq_tdata_0 ;
-        assign axis_rq_tready_obsv_0  =  rq_tready_0;
-        assign axis_rc_tvalid_obsv_0  =  rc_tvalid_0 ;
-        assign axis_rc_tlast_obsv_0   =  rc_tlast_0 ;
-        assign axis_rc_tkeep_obsv_0   =  rc_tkeep_0 ;
-        assign axis_rc_tuser_obsv_0   =  rc_tuser_0;
-        assign axis_rc_tdata_obsv_0   =  rc_tdata_0 ;
-        assign axis_rc_tready_obsv_0  =  m_axis_rc_tready_0;
-        assign axis_cq_tvalid_obsv_0  =  cq_tvalid_0;
-        assign axis_cq_tlast_obsv_0   =  cq_tlast_0 ;
-        assign axis_cq_tkeep_obsv_0   =  cq_tkeep_0 ;
-        assign axis_cq_tuser_obsv_0   =  cq_tuser_0 ;
-        assign axis_cq_tdata_obsv_0   =  cq_tdata_0 ;
-        assign axis_cq_tready_obsv_0  =  m_axis_cq_tready_0;
-        assign axis_cc_tvalid_obsv_0  =  s_axis_cc_tvalid_0 ;
-        assign axis_cc_tlast_obsv_0   =  s_axis_cc_tlast_0 ;
-        assign axis_cc_tkeep_obsv_0   =  s_axis_cc_tkeep_0 ;
-        assign axis_cc_tuser_obsv_0   =  s_axis_cc_tuser_0;
-        assign axis_cc_tdata_obsv_0   =  s_axis_cc_tdata_0 ;
-        assign axis_cc_tready_obsv_0  =  cc_tready_0;
+        // assign axis_rq_tvalid_obsv_0  =  s_axis_rq_tvalid_0;
+        // assign axis_rq_tlast_obsv_0   =  s_axis_rq_tlast_0 ;
+        // assign axis_rq_tkeep_obsv_0   =  s_axis_rq_tkeep_0 ;
+        // assign axis_rq_tuser_obsv_0   =  s_axis_rq_tuser_0 ;
+        // assign axis_rq_tdata_obsv_0   =  s_axis_rq_tdata_0 ;
+        // assign axis_rq_tready_obsv_0  =  rq_tready_0;
+        // assign axis_rc_tvalid_obsv_0  =  rc_tvalid_0 ;
+        // assign axis_rc_tlast_obsv_0   =  rc_tlast_0 ;
+        // assign axis_rc_tkeep_obsv_0   =  rc_tkeep_0 ;
+        // assign axis_rc_tuser_obsv_0   =  rc_tuser_0;
+        // assign axis_rc_tdata_obsv_0   =  rc_tdata_0 ;
+        // assign axis_rc_tready_obsv_0  =  m_axis_rc_tready_0;
+        // assign axis_cq_tvalid_obsv_0  =  cq_tvalid_0;
+        // assign axis_cq_tlast_obsv_0   =  cq_tlast_0 ;
+        // assign axis_cq_tkeep_obsv_0   =  cq_tkeep_0 ;
+        // assign axis_cq_tuser_obsv_0   =  cq_tuser_0 ;
+        // assign axis_cq_tdata_obsv_0   =  cq_tdata_0 ;
+        // assign axis_cq_tready_obsv_0  =  m_axis_cq_tready_0;
+        // assign axis_cc_tvalid_obsv_0  =  s_axis_cc_tvalid_0 ;
+        // assign axis_cc_tlast_obsv_0   =  s_axis_cc_tlast_0 ;
+        // assign axis_cc_tkeep_obsv_0   =  s_axis_cc_tkeep_0 ;
+        // assign axis_cc_tuser_obsv_0   =  s_axis_cc_tuser_0;
+        // assign axis_cc_tdata_obsv_0   =  s_axis_cc_tdata_0 ;
+        // assign axis_cc_tready_obsv_0  =  cc_tready_0;
 
-        assign axis_clk_0 = axis_m_clk_0;
-        assign axis_rst_n_0 = axis_m_rstn_0;
+        // assign axis_clk_0 = axis_m_clk_0;
+        // assign axis_rst_n_0 = axis_m_rstn_0;
 
-        assign cc_tdata_1   =  s_axis_cc_tdata_1;   
-        assign cc_tkeep_1   =  s_axis_cc_tkeep_1 ;   
-        assign cc_tuser_1   =  s_axis_cc_tuser_1 ;   
-        assign cc_tvalid_1  =  s_axis_cc_tvalid_1 ;   
-        assign cc_tlast_1   =  s_axis_cc_tlast_1 ;   
-        assign s_axis_cc_tready_1 = cc_tready_1; 
+        // assign cc_tdata_1   =  s_axis_cc_tdata_1;   
+        // assign cc_tkeep_1   =  s_axis_cc_tkeep_1 ;   
+        // assign cc_tuser_1   =  s_axis_cc_tuser_1 ;   
+        // assign cc_tvalid_1  =  s_axis_cc_tvalid_1 ;   
+        // assign cc_tlast_1   =  s_axis_cc_tlast_1 ;   
+        // assign s_axis_cc_tready_1 = cc_tready_1; 
 
-        assign rq_tdata_1   = s_axis_rq_tdata_1;
-        assign rq_tkeep_1   = s_axis_rq_tkeep_1 ;
-        assign rq_tuser_1   = s_axis_rq_tuser_1 ;
-        assign rq_tvalid_1  = s_axis_rq_tvalid_1 ;
-        assign rq_tlast_1   = s_axis_rq_tlast_1 ;
-        assign s_axis_rq_tready_1 = rq_tready_1;
+        // assign rq_tdata_1   = s_axis_rq_tdata_1;
+        // assign rq_tkeep_1   = s_axis_rq_tkeep_1 ;
+        // assign rq_tuser_1   = s_axis_rq_tuser_1 ;
+        // assign rq_tvalid_1  = s_axis_rq_tvalid_1 ;
+        // assign rq_tlast_1   = s_axis_rq_tlast_1 ;
+        // assign s_axis_rq_tready_1 = rq_tready_1;
 
-        assign m_axis_cq_tvalid_1 =  cq_tvalid_1  ;
-        assign m_axis_cq_tlast_1  =  cq_tlast_1  ;
-        assign m_axis_cq_tkeep_1  =  cq_tkeep_1  ;
-        assign m_axis_cq_tuser_1  =  cq_tuser_1 ;
-        assign m_axis_cq_tdata_1  =  cq_tdata_1  ;
-        assign cq_tready_1 = m_axis_cq_tready_1;
+        // assign m_axis_cq_tvalid_1 =  cq_tvalid_1  ;
+        // assign m_axis_cq_tlast_1  =  cq_tlast_1  ;
+        // assign m_axis_cq_tkeep_1  =  cq_tkeep_1  ;
+        // assign m_axis_cq_tuser_1  =  cq_tuser_1 ;
+        // assign m_axis_cq_tdata_1  =  cq_tdata_1  ;
+        // assign cq_tready_1 = m_axis_cq_tready_1;
 
-        assign m_axis_rc_tvalid_1  = rc_tvalid_1 ;
-        assign m_axis_rc_tlast_1   = rc_tlast_1 ;
-        assign m_axis_rc_tkeep_1   = rc_tkeep_1 ;
-        assign m_axis_rc_tuser_1   = rc_tuser_1;
-        assign m_axis_rc_tdata_1   = rc_tdata_1 ;
-        assign rc_tready_1 = m_axis_rc_tready_1;
+        // assign m_axis_rc_tvalid_1  = rc_tvalid_1 ;
+        // assign m_axis_rc_tlast_1   = rc_tlast_1 ;
+        // assign m_axis_rc_tkeep_1   = rc_tkeep_1 ;
+        // assign m_axis_rc_tuser_1   = rc_tuser_1;
+        // assign m_axis_rc_tdata_1   = rc_tdata_1 ;
+        // assign rc_tready_1 = m_axis_rc_tready_1;
 
-        assign axis_rq_tvalid_obsv_1  =  s_axis_rq_tvalid_1;
-        assign axis_rq_tlast_obsv_1   =  s_axis_rq_tlast_1 ;
-        assign axis_rq_tkeep_obsv_1   =  s_axis_rq_tkeep_1 ;
-        assign axis_rq_tuser_obsv_1   =  s_axis_rq_tuser_1 ;
-        assign axis_rq_tdata_obsv_1   =  s_axis_rq_tdata_1 ;
-        assign axis_rq_tready_obsv_1  =  rq_tready_1;
-        assign axis_rc_tvalid_obsv_1  =  rc_tvalid_1 ;
-        assign axis_rc_tlast_obsv_1   =  rc_tlast_1 ;
-        assign axis_rc_tkeep_obsv_1   =  rc_tkeep_1 ;
-        assign axis_rc_tuser_obsv_1   =  rc_tuser_1;
-        assign axis_rc_tdata_obsv_1   =  rc_tdata_1 ;
-        assign axis_rc_tready_obsv_1  =  m_axis_rc_tready_1;
-        assign axis_cq_tvalid_obsv_1  =  cq_tvalid_1;
-        assign axis_cq_tlast_obsv_1   =  cq_tlast_1 ;
-        assign axis_cq_tkeep_obsv_1   =  cq_tkeep_1 ;
-        assign axis_cq_tuser_obsv_1   =  cq_tuser_1 ;
-        assign axis_cq_tdata_obsv_1   =  cq_tdata_1 ;
-        assign axis_cq_tready_obsv_1  =  m_axis_cq_tready_1;
-        assign axis_cc_tvalid_obsv_1  =  s_axis_cc_tvalid_1 ;
-        assign axis_cc_tlast_obsv_1   =  s_axis_cc_tlast_1 ;
-        assign axis_cc_tkeep_obsv_1   =  s_axis_cc_tkeep_1 ;
-        assign axis_cc_tuser_obsv_1   =  s_axis_cc_tuser_1;
-        assign axis_cc_tdata_obsv_1   =  s_axis_cc_tdata_1 ;
-        assign axis_cc_tready_obsv_1  =  cc_tready_1;
+        // assign axis_rq_tvalid_obsv_1  =  s_axis_rq_tvalid_1;
+        // assign axis_rq_tlast_obsv_1   =  s_axis_rq_tlast_1 ;
+        // assign axis_rq_tkeep_obsv_1   =  s_axis_rq_tkeep_1 ;
+        // assign axis_rq_tuser_obsv_1   =  s_axis_rq_tuser_1 ;
+        // assign axis_rq_tdata_obsv_1   =  s_axis_rq_tdata_1 ;
+        // assign axis_rq_tready_obsv_1  =  rq_tready_1;
+        // assign axis_rc_tvalid_obsv_1  =  rc_tvalid_1 ;
+        // assign axis_rc_tlast_obsv_1   =  rc_tlast_1 ;
+        // assign axis_rc_tkeep_obsv_1   =  rc_tkeep_1 ;
+        // assign axis_rc_tuser_obsv_1   =  rc_tuser_1;
+        // assign axis_rc_tdata_obsv_1   =  rc_tdata_1 ;
+        // assign axis_rc_tready_obsv_1  =  m_axis_rc_tready_1;
+        // assign axis_cq_tvalid_obsv_1  =  cq_tvalid_1;
+        // assign axis_cq_tlast_obsv_1   =  cq_tlast_1 ;
+        // assign axis_cq_tkeep_obsv_1   =  cq_tkeep_1 ;
+        // assign axis_cq_tuser_obsv_1   =  cq_tuser_1 ;
+        // assign axis_cq_tdata_obsv_1   =  cq_tdata_1 ;
+        // assign axis_cq_tready_obsv_1  =  m_axis_cq_tready_1;
+        // assign axis_cc_tvalid_obsv_1  =  s_axis_cc_tvalid_1 ;
+        // assign axis_cc_tlast_obsv_1   =  s_axis_cc_tlast_1 ;
+        // assign axis_cc_tkeep_obsv_1   =  s_axis_cc_tkeep_1 ;
+        // assign axis_cc_tuser_obsv_1   =  s_axis_cc_tuser_1;
+        // assign axis_cc_tdata_obsv_1   =  s_axis_cc_tdata_1 ;
+        // assign axis_cc_tready_obsv_1  =  cc_tready_1;
 
-        assign axis_clk_1 = axis_m_clk_1;
-        assign axis_rst_n_1 = axis_m_rstn_1;
+        // assign axis_clk_1 = axis_m_clk_1;
+        // assign axis_rst_n_1 = axis_m_rstn_1;
 
 
 
@@ -584,8 +593,8 @@ module pcie_engine_link_top#(
         .PORT_NUM                     ( 32'd16 ),
         .QUEUE_DEPTH_LOG_2            ( 10     ), 	//Maximum depth of one output queue is (1 << QUEUE_DEPTH)
     //Route Cfg Parameter
-	    .ROUTE_RO_REG_NUM ( 32 ),
-	    .ROUTE_RW_REG_NUM ( 32 ),
+        .ROUTE_RO_REG_NUM ( 32 ),
+        .ROUTE_RW_REG_NUM ( 32 ),
 
         //NIC Cfg Parameter
         .NIC_RO_REG_NUM ( 128 ),
@@ -596,13 +605,13 @@ module pcie_engine_link_top#(
         .LINK_RW_REG_NUM ( 13 ),
         //Cfg Node Parameter
         .CFG_NODE_REG_BASE_ADDR  ( 24'h10_0000                                                ),//
-	    // .CFG_NODE_RW_REG_NUM     ( ROUTE_RW_REG_NUM + NIC_RW_REG_NUM + LINK_RW_REG_NUM + 32'd1),//read-writer register number,register data witdh is 32bit,
+        // .CFG_NODE_RW_REG_NUM     ( ROUTE_RW_REG_NUM + NIC_RW_REG_NUM + LINK_RW_REG_NUM + 32'd1),//read-writer register number,register data witdh is 32bit,
         .CFG_NODE_RW_REG_NUM     ( 32 + 128 + 13 + 32'd1),//read-writer register number,register data witdh is 32bit,
-	    .CFG_NODE_RO_BASE_ADDR   ( 24'h30_0000                                                ),//configuration read only register base address  //
-	    // .CFG_NODE_RO_REG_NUM     ( ROUTE_RO_REG_NUM + NIC_RO_REG_NUM + LINK_RO_REG_NUM + 32'd3), //read-only register number,register data witdh is 32bit, SUM max is 14'h3fff-3
+        .CFG_NODE_RO_BASE_ADDR   ( 24'h30_0000                                                ),//configuration read only register base address  //
+        // .CFG_NODE_RO_REG_NUM     ( ROUTE_RO_REG_NUM + NIC_RO_REG_NUM + LINK_RO_REG_NUM + 32'd3), //read-only register number,register data witdh is 32bit, SUM max is 14'h3fff-3
         .CFG_NODE_RO_REG_NUM     ( 32 + 128 + 10 + 32'd3), //read-only register number,register data witdh is 32bit, SUM max is 14'h3fff-3
-	    .CFG_NODE_BUS_BASE_ADDR  ( 24'h70_0000                                                ), ////configuration bus base address	 //
-	    .CFG_NODE_BUS_ADDR_WIDTH ( 0                                                          ),
+        .CFG_NODE_BUS_BASE_ADDR  ( 24'h70_0000                                                ), ////configuration bus base address	 //
+        .CFG_NODE_BUS_ADDR_WIDTH ( 0                                                          ),
 
         //Phy cfg parameter
         .APB_SEL ( 1'b0 )
@@ -748,8 +757,8 @@ module pcie_engine_link_top#(
         .PORT_NUM                     ( 32'd16 ),
         .QUEUE_DEPTH_LOG_2            ( 10     ), 	//Maximum depth of one output queue is (1 << QUEUE_DEPTH)
     //Route Cfg Parameter
-	    .ROUTE_RO_REG_NUM ( 32 ),
-	    .ROUTE_RW_REG_NUM ( 32 ),
+        .ROUTE_RO_REG_NUM ( 32 ),
+        .ROUTE_RW_REG_NUM ( 32 ),
 
         //NIC Cfg Parameter
         .NIC_RO_REG_NUM ( 128 ),
@@ -760,13 +769,13 @@ module pcie_engine_link_top#(
         .LINK_RW_REG_NUM ( 13 ),
         //Cfg Node Parameter
         .CFG_NODE_REG_BASE_ADDR  ( 24'h10_0000                                                ),//
-	    // .CFG_NODE_RW_REG_NUM     ( ROUTE_RW_REG_NUM + NIC_RW_REG_NUM + LINK_RW_REG_NUM + 32'd1),//read-writer register number,register data witdh is 32bit,
+        // .CFG_NODE_RW_REG_NUM     ( ROUTE_RW_REG_NUM + NIC_RW_REG_NUM + LINK_RW_REG_NUM + 32'd1),//read-writer register number,register data witdh is 32bit,
         .CFG_NODE_RW_REG_NUM     ( 32 + 128 + 13 + 32'd1),//read-writer register number,register data witdh is 32bit,
-	    .CFG_NODE_RO_BASE_ADDR   ( 24'h30_0000                                                ),//configuration read only register base address  //
-	    // .CFG_NODE_RO_REG_NUM     ( ROUTE_RO_REG_NUM + NIC_RO_REG_NUM + LINK_RO_REG_NUM + 32'd3), //read-only register number,register data witdh is 32bit, SUM max is 14'h3fff-3
+        .CFG_NODE_RO_BASE_ADDR   ( 24'h30_0000                                                ),//configuration read only register base address  //
+        // .CFG_NODE_RO_REG_NUM     ( ROUTE_RO_REG_NUM + NIC_RO_REG_NUM + LINK_RO_REG_NUM + 32'd3), //read-only register number,register data witdh is 32bit, SUM max is 14'h3fff-3
         .CFG_NODE_RO_REG_NUM     ( 32 + 128 + 10 + 32'd3), //read-only register number,register data witdh is 32bit, SUM max is 14'h3fff-3
-	    .CFG_NODE_BUS_BASE_ADDR  ( 24'h70_0000                                                ), ////configuration bus base address	 //
-	    .CFG_NODE_BUS_ADDR_WIDTH ( 0                                                          ),
+        .CFG_NODE_BUS_BASE_ADDR  ( 24'h70_0000                                                ), ////configuration bus base address	 //
+        .CFG_NODE_BUS_ADDR_WIDTH ( 0                                                          ),
 
         //Phy cfg parameter
         .APB_SEL ( 1'b0 )
@@ -1000,102 +1009,102 @@ module pcie_engine_link_top#(
         .i_nic_rst_n                        (~nic_rst_n),
         .i_mgmt_clk                         (mgmt_clk),
         .i_mgmt_rst_n                       (~mgmt_rst_n),                                      
-  .o_nic_hpc_tx_rdy         (i_link_hpc_pkt_ready_1),                               
-  .iv_nic_hpc_tx_axis_data  (o_link_hpc_pkt_data_1 ),                               
-  .iv_nic_hpc_tx_axis_keep  (o_link_hpc_pkt_keep_1  ),                               
-  .i_nic_hpc_tx_axis_start  (o_link_hpc_pkt_start_1 ),                                
-  .i_nic_hpc_tx_axis_end    (o_link_hpc_pkt_end_1 ),                               
-  .i_nic_hpc_tx_axis_valid  (o_link_hpc_pkt_valid_1),                               
-//   .iv_nic_hpc_tx_axis_user  (o_link_hpc_pkt_user_1 ), 
-  .iv_nic_hpc_tx_axis_user  ({o_link_hpc_pkt_user_1,1'b1} ),                                 
-  .o_nic_eth_tx_rdy         (link_eth_tx_pkt_ready_1),                             
-  .iv_nic_eth_tx_axis_data  (link_eth_tx_pkt_data_1) ,                             
-  .iv_nic_eth_tx_axis_keep  (link_eth_tx_pkt_keep_1),                              
-  .i_nic_eth_tx_axis_start  (link_eth_tx_pkt_start_1),                             
-  .i_nic_eth_tx_axis_end    (link_eth_tx_pkt_end_1),                               
-  .i_nic_eth_tx_axis_valid  (link_eth_tx_pkt_valid_1),                             
-//   .iv_nic_eth_tx_axis_user  (link_eth_tx_pkt_user_1), 
-  .iv_nic_eth_tx_axis_user  ({link_eth_tx_pkt_user_1,1'b1}),                                
-  .i_nic_hpc_rx_rdy         (o_link_hpc_pkt_ready_1        ),                               
-  .ov_nic_hpc_rx_axis_data  (i_link_hpc_pkt_data_1 ),                               
-  .ov_nic_hpc_rx_axis_keep  (i_link_hpc_pkt_keep_1 ),                                 
-  .o_nic_hpc_rx_axis_start  (i_link_hpc_pkt_start_1 ),                                
-  .o_nic_hpc_rx_axis_end    (i_link_hpc_pkt_end_1   ),                                
-  .o_nic_hpc_rx_axis_valid  (i_link_hpc_pkt_valid_1 ),                                
-  .ov_nic_hpc_rx_axis_user  (i_link_hpc_pkt_user_1 ),                                
-  .i_nic_eth_rx_rdy         (link_eth_rx_pkt_ready_1       ),                             
-  .ov_nic_eth_rx_axis_data  (link_eth_rx_pkt_data_1),                             
-  .ov_nic_eth_rx_axis_keep  (link_eth_rx_pkt_keep_1),                                
-  .o_nic_eth_rx_axis_start  (link_eth_rx_pkt_start_1),                               
-  .o_nic_eth_rx_axis_end    (link_eth_rx_pkt_end_1  ),                              
-  .o_nic_eth_rx_axis_valid  (link_eth_rx_pkt_valid_1),                               
-  .ov_nic_eth_rx_axis_user  (link_eth_rx_pkt_user_1),                               
-  .i_eth_pkt_valid          (u1_i_eth_pkt_valid) ,                    
-  .i_eth_pkt_start          (u1_i_eth_pkt_start) ,                    
-  .i_eth_pkt_end            (u1_i_eth_pkt_end) ,                  
-  .iv_eth_pkt_user          ({u1_iv_eth_pkt_user[`LINK_LAYER_USER_WIDTH-1:1],~u1_iv_eth_pkt_user[0]}) ,                    
-  .iv_eth_pkt_keep          (u1_iv_eth_pkt_keep) ,                    
-  .iv_eth_pkt_data          (u1_iv_eth_pkt_data) ,                    
-  .o_eth_pkt_ready          (u1_o_eth_pkt_ready) ,                    
-  // .route_cfg_pkt_in         (u1_route_cfg_pkt_in) ,                     
-  // .route_cfg_pkt_in_vld     (u1_route_cfg_pkt_in_vld) ,                         
-  // .route_cfg_pkt_in_rdy     (u1_route_cfg_pkt_in_rdy) ,                         
-  // .phy_cfg_pkt_out          (u1_phy_cfg_pkt_out) ,                    
-  // .phy_cfg_pkt_out_vld      (u1_phy_cfg_pkt_out_vld) ,                        
-  // .phy_cfg_pkt_out_rdy      (u1_phy_cfg_pkt_out_rdy) ,                        
-  // .psel_i                   (u1_psel_i) ,           
-  // .paddr_i                  (u1_paddr_i) ,            
-  // .pwrite_i                 (u1_pwrite_i) ,             
-  // .penable_i                (u1_penable_i) ,              
-  // .pwdata_i                 (u1_pwdata_i) ,             
-  // .prdata_o                 (u1_prdata_o) ,             
-  // .pready_o                 (u1_pready_o) ,             
-  // .pslverr_o                (u1_pslverr_o ) ,              
-  .ib_id                    (u1_ib_id     ) ,          
-  .pkt_crdt_m               (u1_pkt_crdt_m), 
-  .ovBuffer_VL0_eth_tx_data (u1_ovBuffer_VL0_eth_tx_data ) ,                              
-  .oBuffer_VL0_eth_tx_empty (u1_oBuffer_VL0_eth_tx_empty ) ,                              
-  .iBuffer_VL0_eth_tx_rden  (u1_iBuffer_VL0_eth_tx_rden  ) ,                              
-  .ovBuffer_VL1_eth_tx_data (u1_ovBuffer_VL1_eth_tx_data ) ,                              
-  .oBuffer_VL1_eth_tx_empty (u1_oBuffer_VL1_eth_tx_empty ) ,                              
-  .iBuffer_VL1_eth_tx_rden  (u1_iBuffer_VL1_eth_tx_rden  ) ,                              
-  .ovBuffer_VL2_eth_tx_data (u1_ovBuffer_VL2_eth_tx_data ) ,                              
-  .oBuffer_VL2_eth_tx_empty (u1_oBuffer_VL2_eth_tx_empty ) ,                              
-  .iBuffer_VL2_eth_tx_rden  (u1_iBuffer_VL2_eth_tx_rden  ) ,                              
-  .ovBuffer_VL3_eth_tx_data (u1_ovBuffer_VL3_eth_tx_data ) ,                              
-  .oBuffer_VL3_eth_tx_empty (u1_oBuffer_VL3_eth_tx_empty ) ,                              
-  .iBuffer_VL3_eth_tx_rden  (u1_iBuffer_VL3_eth_tx_rden  ) ,                              
-  .oTail_VL0_eth_tx_empty   (u1_oTail_VL0_eth_tx_empty   ) ,                              
-  .iTail_VL0_eth_tx_rden    (u1_iTail_VL0_eth_tx_rden    ) ,                              
-  .oTail_VL1_eth_tx_empty   (u1_oTail_VL1_eth_tx_empty   ) ,                              
-  .iTail_VL1_eth_tx_rden    (u1_iTail_VL1_eth_tx_rden    ) ,                              
-  .oTail_VL2_eth_tx_empty   (u1_oTail_VL2_eth_tx_empty   ) ,                              
-  .iTail_VL2_eth_tx_rden    (u1_iTail_VL2_eth_tx_rden    ) ,                              
-  .oTail_VL3_eth_tx_empty   (u1_oTail_VL3_eth_tx_empty   ) ,                              
-  .iTail_VL3_eth_tx_rden    (u1_iTail_VL3_eth_tx_rden    ) ,                              
-  .ov_queue0_eth_length     (u1_ov_queue0_eth_length     ) ,                              
-  .ov_queue1_eth_length     (u1_ov_queue1_eth_length     ) ,                              
-  .ov_queue2_eth_length     (u1_ov_queue2_eth_length     ) ,                              
-  .ov_queue3_eth_length     (u1_ov_queue3_eth_length     ) ,                              
-  .iVL0StallState_eth       (u1_iVL0StallState_eth       ) ,                              
-  .iVL1StallState_eth       (u1_iVL1StallState_eth       ) ,                              
-  .iVL2StallState_eth       (u1_iVL2StallState_eth       ) ,                              
-  .iVL3StallState_eth       (u1_iVL3StallState_eth       ) ,                              
-  .o_link_mode_sel          (u1_i_link_mode_sel           ) ,    //output                               
-  .i_xlgmii_rxd             (u1_i_xlgmii_rxd              ) ,                               
-  .i_xlgmii_rxc             (u1_i_xlgmii_rxc              ) ,                               
-  .i_xlgmii_valid           (u1_i_xlgmii_valid            ) ,                               
-  .o_xlgmii_txd             (u1_o_xlgmii_txd              ) ,                               
-  .o_xlgmii_txc             (u1_o_xlgmii_txc              ) ,                               
-  .i_pcs_rdy                (u1_i_pcs_rdy                 ) ,                               
-  .hpc_rdy_phy_state        (u1_hpc_rdy_phy_state) ,                      
-  .i_active_trigger         (u1_i_active_trigger ) ,                      
-  .o_active_trigger         (u1_o_active_trigger  ) //,                       
-  // .anti_starv_en            (u1_anti_starv_en    ) ,                      
-  // .starv_cycles             (u1_starv_cycles     ) //,                      
-  // .sram_pin_ctrl            (u1_sram_pin_ctrl    ) ,                      
-  // .dbg_sel                  (           ) ,                       
-  // .dbg_bus                  (            )                      
+        .o_nic_hpc_tx_rdy         (i_link_hpc_pkt_ready_1),                               
+        .iv_nic_hpc_tx_axis_data  (o_link_hpc_pkt_data_1 ),                               
+        .iv_nic_hpc_tx_axis_keep  (o_link_hpc_pkt_keep_1  ),                               
+        .i_nic_hpc_tx_axis_start  (o_link_hpc_pkt_start_1 ),                                
+        .i_nic_hpc_tx_axis_end    (o_link_hpc_pkt_end_1 ),                               
+        .i_nic_hpc_tx_axis_valid  (o_link_hpc_pkt_valid_1),                               
+        //   .iv_nic_hpc_tx_axis_user  (o_link_hpc_pkt_user_1 ), 
+        .iv_nic_hpc_tx_axis_user  ({o_link_hpc_pkt_user_1,1'b1} ),                                 
+        .o_nic_eth_tx_rdy         (link_eth_tx_pkt_ready_1),                             
+        .iv_nic_eth_tx_axis_data  (link_eth_tx_pkt_data_1) ,                             
+        .iv_nic_eth_tx_axis_keep  (link_eth_tx_pkt_keep_1),                              
+        .i_nic_eth_tx_axis_start  (link_eth_tx_pkt_start_1),                             
+        .i_nic_eth_tx_axis_end    (link_eth_tx_pkt_end_1),                               
+        .i_nic_eth_tx_axis_valid  (link_eth_tx_pkt_valid_1),                             
+        //   .iv_nic_eth_tx_axis_user  (link_eth_tx_pkt_user_1), 
+        .iv_nic_eth_tx_axis_user  ({link_eth_tx_pkt_user_1,1'b1}),                                
+        .i_nic_hpc_rx_rdy         (o_link_hpc_pkt_ready_1        ),                               
+        .ov_nic_hpc_rx_axis_data  (i_link_hpc_pkt_data_1 ),                               
+        .ov_nic_hpc_rx_axis_keep  (i_link_hpc_pkt_keep_1 ),                                 
+        .o_nic_hpc_rx_axis_start  (i_link_hpc_pkt_start_1 ),                                
+        .o_nic_hpc_rx_axis_end    (i_link_hpc_pkt_end_1   ),                                
+        .o_nic_hpc_rx_axis_valid  (i_link_hpc_pkt_valid_1 ),                                
+        .ov_nic_hpc_rx_axis_user  (i_link_hpc_pkt_user_1 ),                                
+        .i_nic_eth_rx_rdy         (link_eth_rx_pkt_ready_1       ),                             
+        .ov_nic_eth_rx_axis_data  (link_eth_rx_pkt_data_1),                             
+        .ov_nic_eth_rx_axis_keep  (link_eth_rx_pkt_keep_1),                                
+        .o_nic_eth_rx_axis_start  (link_eth_rx_pkt_start_1),                               
+        .o_nic_eth_rx_axis_end    (link_eth_rx_pkt_end_1  ),                              
+        .o_nic_eth_rx_axis_valid  (link_eth_rx_pkt_valid_1),                               
+        .ov_nic_eth_rx_axis_user  (link_eth_rx_pkt_user_1),                               
+        .i_eth_pkt_valid          (u1_i_eth_pkt_valid) ,                    
+        .i_eth_pkt_start          (u1_i_eth_pkt_start) ,                    
+        .i_eth_pkt_end            (u1_i_eth_pkt_end) ,                  
+        .iv_eth_pkt_user          ({u1_iv_eth_pkt_user[`LINK_LAYER_USER_WIDTH-1:1],~u1_iv_eth_pkt_user[0]}) ,                    
+        .iv_eth_pkt_keep          (u1_iv_eth_pkt_keep) ,                    
+        .iv_eth_pkt_data          (u1_iv_eth_pkt_data) ,                    
+        .o_eth_pkt_ready          (u1_o_eth_pkt_ready) ,                    
+        // .route_cfg_pkt_in         (u1_route_cfg_pkt_in) ,                     
+        // .route_cfg_pkt_in_vld     (u1_route_cfg_pkt_in_vld) ,                         
+        // .route_cfg_pkt_in_rdy     (u1_route_cfg_pkt_in_rdy) ,                         
+        // .phy_cfg_pkt_out          (u1_phy_cfg_pkt_out) ,                    
+        // .phy_cfg_pkt_out_vld      (u1_phy_cfg_pkt_out_vld) ,                        
+        // .phy_cfg_pkt_out_rdy      (u1_phy_cfg_pkt_out_rdy) ,                        
+        // .psel_i                   (u1_psel_i) ,           
+        // .paddr_i                  (u1_paddr_i) ,            
+        // .pwrite_i                 (u1_pwrite_i) ,             
+        // .penable_i                (u1_penable_i) ,              
+        // .pwdata_i                 (u1_pwdata_i) ,             
+        // .prdata_o                 (u1_prdata_o) ,             
+        // .pready_o                 (u1_pready_o) ,             
+        // .pslverr_o                (u1_pslverr_o ) ,              
+        .ib_id                    (u1_ib_id     ) ,          
+        .pkt_crdt_m               (u1_pkt_crdt_m), 
+        .ovBuffer_VL0_eth_tx_data (u1_ovBuffer_VL0_eth_tx_data ) ,                              
+        .oBuffer_VL0_eth_tx_empty (u1_oBuffer_VL0_eth_tx_empty ) ,                              
+        .iBuffer_VL0_eth_tx_rden  (u1_iBuffer_VL0_eth_tx_rden  ) ,                              
+        .ovBuffer_VL1_eth_tx_data (u1_ovBuffer_VL1_eth_tx_data ) ,                              
+        .oBuffer_VL1_eth_tx_empty (u1_oBuffer_VL1_eth_tx_empty ) ,                              
+        .iBuffer_VL1_eth_tx_rden  (u1_iBuffer_VL1_eth_tx_rden  ) ,                              
+        .ovBuffer_VL2_eth_tx_data (u1_ovBuffer_VL2_eth_tx_data ) ,                              
+        .oBuffer_VL2_eth_tx_empty (u1_oBuffer_VL2_eth_tx_empty ) ,                              
+        .iBuffer_VL2_eth_tx_rden  (u1_iBuffer_VL2_eth_tx_rden  ) ,                              
+        .ovBuffer_VL3_eth_tx_data (u1_ovBuffer_VL3_eth_tx_data ) ,                              
+        .oBuffer_VL3_eth_tx_empty (u1_oBuffer_VL3_eth_tx_empty ) ,                              
+        .iBuffer_VL3_eth_tx_rden  (u1_iBuffer_VL3_eth_tx_rden  ) ,                              
+        .oTail_VL0_eth_tx_empty   (u1_oTail_VL0_eth_tx_empty   ) ,                              
+        .iTail_VL0_eth_tx_rden    (u1_iTail_VL0_eth_tx_rden    ) ,                              
+        .oTail_VL1_eth_tx_empty   (u1_oTail_VL1_eth_tx_empty   ) ,                              
+        .iTail_VL1_eth_tx_rden    (u1_iTail_VL1_eth_tx_rden    ) ,                              
+        .oTail_VL2_eth_tx_empty   (u1_oTail_VL2_eth_tx_empty   ) ,                              
+        .iTail_VL2_eth_tx_rden    (u1_iTail_VL2_eth_tx_rden    ) ,                              
+        .oTail_VL3_eth_tx_empty   (u1_oTail_VL3_eth_tx_empty   ) ,                              
+        .iTail_VL3_eth_tx_rden    (u1_iTail_VL3_eth_tx_rden    ) ,                              
+        .ov_queue0_eth_length     (u1_ov_queue0_eth_length     ) ,                              
+        .ov_queue1_eth_length     (u1_ov_queue1_eth_length     ) ,                              
+        .ov_queue2_eth_length     (u1_ov_queue2_eth_length     ) ,                              
+        .ov_queue3_eth_length     (u1_ov_queue3_eth_length     ) ,                              
+        .iVL0StallState_eth       (u1_iVL0StallState_eth       ) ,                              
+        .iVL1StallState_eth       (u1_iVL1StallState_eth       ) ,                              
+        .iVL2StallState_eth       (u1_iVL2StallState_eth       ) ,                              
+        .iVL3StallState_eth       (u1_iVL3StallState_eth       ) ,                              
+        .o_link_mode_sel          (u1_i_link_mode_sel           ) ,    //output                               
+        .i_xlgmii_rxd             (u1_i_xlgmii_rxd              ) ,                               
+        .i_xlgmii_rxc             (u1_i_xlgmii_rxc              ) ,                               
+        .i_xlgmii_valid           (u1_i_xlgmii_valid            ) ,                               
+        .o_xlgmii_txd             (u1_o_xlgmii_txd              ) ,                               
+        .o_xlgmii_txc             (u1_o_xlgmii_txc              ) ,                               
+        .i_pcs_rdy                (u1_i_pcs_rdy                 ) ,                               
+        .hpc_rdy_phy_state        (u1_hpc_rdy_phy_state) ,                      
+        .i_active_trigger         (u1_i_active_trigger ) ,                      
+        .o_active_trigger         (u1_o_active_trigger  ) //,                       
+        // .anti_starv_en            (u1_anti_starv_en    ) ,                      
+        // .starv_cycles             (u1_starv_cycles     ) //,                      
+        // .sram_pin_ctrl            (u1_sram_pin_ctrl    ) ,                      
+        // .dbg_sel                  (           ) ,                       
+        // .dbg_bus                  (            )                      
 );
 
 `ifdef DUMMY_NET_PHY
@@ -1183,8 +1192,8 @@ end
 initial begin
     // force top.dut.u_pcie_subsys0.repair_test_mode = 0;
     // force top.dut.u_pcie_subsys1.repair_test_mode = 0;
-    force top.dut.u0_net_top.repair_test_mode = 0;
-    force top.dut.u1_net_top.repair_test_mode = 0;
+    force u0_net_top.repair_test_mode = 0;
+    force u1_net_top.repair_test_mode = 0;
     force u0_net_top.u_eth_phy.phy_25g_inst.i_dpl.i_phy_top_registers.rw_sim_ctrl__sim_1b_model_o=1;
     force u1_net_top.u_eth_phy.phy_25g_inst.i_dpl.i_phy_top_registers.rw_sim_ctrl__sim_1b_model_o=1;
     if($test$plusargs("INIT_ROM")) prog_mem_sel=0;
