@@ -860,8 +860,8 @@ class test_direct_param extends uvm_test;
         qp_start_vaddr = `VA_QP(qp_num);
         // create qp mr
         `uvm_info("NOTICE", $sformatf("before create mr, qp_num: %h, start_vaddr: %h", qp_num, qp_start_vaddr), UVM_LOW);
-        sq_mpt = create_mr(host_id, proc_id, 1024 * 512, qp_start_vaddr, pd, `PAGE_SIZE, TRUE, 8'b1000_0011);
-        rq_mpt = create_mr(host_id, proc_id, 1024 * 512, qp_start_vaddr + `SQ_RQ_GAP, pd, `PAGE_SIZE, TRUE, 8'b1000_0011);
+        sq_mpt = create_mr(host_id, proc_id, `VRF_SQ_BYTE_SIZE, qp_start_vaddr, pd, `PAGE_SIZE, TRUE, 8'b1000_0011);
+        rq_mpt = create_mr(host_id, proc_id, `VRF_RQ_BYTE_SIZE, qp_start_vaddr + `SQ_RQ_GAP, pd, `PAGE_SIZE, TRUE, 8'b1000_0011);
 
         // set QP context
         qpc.opt_param_mask = $urandom();
@@ -901,11 +901,11 @@ class test_direct_param extends uvm_test;
         qpc.cqn_snd                     = send_cq.ctx.cqn;
         qpc.cqn_rcv                     = recv_cq.ctx.cqn;
         qpc.snd_wqe_base_l              = sq_mpt.key;
-        qpc.snd_wqe_len                 = 32'h0008_0000;
+        qpc.snd_wqe_len                 = `VRF_SQ_BYTE_SIZE;
         qpc.last_acked_psn              = qpc.next_send_psn;
         qpc.rnr_nextrecvpsn             = qpc.next_send_psn;
         qpc.rcv_wqe_base_l              = rq_mpt.key;
-        qpc.rcv_wqe_len                 = 32'h0008_0000;
+        qpc.rcv_wqe_len                 = `VRF_RQ_BYTE_SIZE;
         cfg_agt.modify_qp(host_id, qpc);
 
         qp = hca_queue_pair::type_id::create($sformatf("qp%0d", qpc.local_qpn));
