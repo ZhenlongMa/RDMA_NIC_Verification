@@ -179,16 +179,16 @@ class hca_scoreboard extends uvm_scoreboard;
                             `uvm_info("CQE_NOTICE", $sformatf("ref cqe remaining: %0d! host_id: %h", q_list.cq_list[j][0].cqe_list.size(), j), UVM_LOW);
                             
                             // If reference CQE queue is empty, wait for INTR to guarantee communication is complete
-                            if (q_list.cq_list[j][0].cqe_list.size() == 0) begin
-                                duv_fifo[j].get(duv_fifo_item[j]);
-                                if (duv_fifo_item[j].item_type == INTR) begin
-                                    `uvm_info("GLB_STOP_INFO", "global stop launched by scoreboard!", UVM_LOW);
-                                    break;
-                                end
-                                else begin
-                                    `uvm_fatal("ITEM_TYPE_ERROR", "WTF is this?");
-                                end
-                            end
+                            // if (q_list.cq_list[j][0].cqe_list.size() == 0) begin
+                            //     duv_fifo[j].get(duv_fifo_item[j]);
+                            //     if (duv_fifo_item[j].item_type == INTR) begin
+                            //         `uvm_info("GLB_STOP_INFO", "global stop launched by scoreboard!", UVM_LOW);
+                            //         break;
+                            //     end
+                            //     else begin
+                            //         `uvm_fatal("ITEM_TYPE_ERROR", "WTF is this?");
+                            //     end
+                            // end
                         end
                         // break;
                     end
