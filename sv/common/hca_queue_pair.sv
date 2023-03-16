@@ -473,11 +473,11 @@ class hca_queue_pair extends uvm_object;
         // set wqe_offset and base physical address 
         if (op_type == RECV) begin
             base_paddr = `PA_QP(proc_id, qp.ctx.local_qpn) + `SQ_RQ_GAP;
-            wqe_offset = qp.rq_header;
+            wqe_offset = qp.rq_header % sq_byte_size;
         end
         else begin
             base_paddr = `PA_QP(proc_id, qp.ctx.local_qpn);
-            wqe_offset = qp.sq_header;
+            wqe_offset = qp.sq_header % sq_byte_size;
         end
 
         // write wqe
