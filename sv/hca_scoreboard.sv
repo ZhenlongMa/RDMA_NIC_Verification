@@ -199,6 +199,9 @@ class hca_scoreboard extends uvm_scoreboard;
             wait fork;
             set_global_stop();
             judge();
+            for (int i = 0; i < host_num; i++) begin
+                duv_fifo[i].flush();
+            end
             `uvm_info("GLB_STOP_INFO", $sformatf("batch finished! db_id: %h", db_id), UVM_LOW);
         end
         `uvm_info("GLB_STOP_INFO", $sformatf("verification finished!"), UVM_LOW);
