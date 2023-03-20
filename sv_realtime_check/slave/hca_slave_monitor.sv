@@ -326,12 +326,12 @@ class hca_slave_monitor extends uvm_monitor;
             return 1;
         end
         // if this is data write
-        // else if ((item.rq_addr[63:48] == 16'h0001) && 
-        //          (item.rq_addr[47] == 1'b1) && 
-        //          (item.item_type == DMA_WR)) begin
-        //     `uvm_info("SLV_MON_NOTICE", $sformatf("slave monitor sends data to SCB, address: %h", item.rq_addr), UVM_LOW);
-        //     return 2;
-        // end
+        else if ((item.rq_addr[63:48] == 16'h0001) && 
+                 (item.rq_addr[47] == 1'b1) && 
+                 (item.item_type == DMA_WR)) begin
+            `uvm_info("SLV_MON_NOTICE", $sformatf("slave monitor sends data to SCB, address: %h", item.rq_addr), UVM_LOW);
+            return 2;
+        end
         else begin
         `uvm_info("SLV_MON_NOTICE", $sformatf("Not CQE, slave monitor does not send item to SCB, address: %h", item.rq_addr), UVM_LOW);
             return 0;

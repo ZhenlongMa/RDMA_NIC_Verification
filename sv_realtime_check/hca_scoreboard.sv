@@ -387,57 +387,37 @@ class hca_scoreboard extends uvm_scoreboard;
         end
         // consider last_be and first_be
         length = item.rq_dword_count * 4;
-        
         case (item.rq_first_be)
             4'b1111: begin
-                start_addr = item.rq_addr;
+                dst_addr = item.rq_addr;
                 length = length;
             end
             4'b1110: begin
-                start_addr = item.rq_addr + 1;
+                dst_addr = item.rq_addr + 1;
                 temp_fifo.pop_byte();
                 length -= 1;
             end
             4'b1100: begin
-                start_addr = item.rq_addr + 2;
+                dst_addr = item.rq_addr + 2;
                 temp_fifo.pop_byte();
                 temp_fifo.pop_byte();
                 length -= 2;
             end
             4'b1000: begin
-                start_addr = item.rq_addr + 3;
+                dst_addr = item.rq_addr + 3;
                 temp_fifo.pop_byte();
                 temp_fifo.pop_byte();
                 temp_fifo.pop_byte();
                 length -= 3;
             end
             4'b0001: begin
-                start_addr = item.rq_addr;
                 length = 1;
             end
             4'b0011: begin
-                start_addr = item.rq_addr;
                 length = 2;
             end
             4'b0111: begin
-                start_addr = item.rq_addr;
                 length = 3;
-            end
-            4'b0110: begin
-                start_addr = item.rq_addr + 1;
-                length = 2;
-                temp_fifo.pop_byte();
-            end
-            4'b0010: begin
-                start_addr = item.rq_addr + 1;
-                length = 1;
-                temp_fifo.pop_byte();
-            end
-            4'b0100: begin
-                start_addr = item.rq_addr + 2;
-                length = 1;
-                temp_fifo.pop_byte();
-                temp_fifo.pop_byte();
             end
             default: begin
                 `uvm_fatal("BE_ERROR", $sformatf("rq_first_be error: %h", item.rq_first_be));
@@ -469,7 +449,6 @@ class hca_scoreboard extends uvm_scoreboard;
             end
         endcase
 
-
         src_addr = 64'h0001_8000_0000_0000;
         // set QPN field
         src_addr[46:33] = dst_addr[46:33];
@@ -482,7 +461,7 @@ class hca_scoreboard extends uvm_scoreboard;
             `uvm_fatal("ADDR_ERR", $sformatf("32nd bit wrong! dst_addr: %h", dst_addr));
         end
  
-        if (check_item_vs_mem(src_host_id, src_addr, item, dst_host_id, temp_fifo, dst_addr, length) == 0) begin
+        if (check_mem(src_host_id, src_addr, dst_host_id, dst_addr, length) == 0) begin
             `uvm_fatal("CHECK_MEM_ERR", 
                 $sformatf("Write check failed! src_host_id: %0d, src_addr: %h, dst_host_id: %0d, dst_addr: %h, length: %h",
                 src_host_id, src_addr, dst_host_id, dst_addr, length));
@@ -491,32 +470,5 @@ class hca_scoreboard extends uvm_scoreboard;
             `uvm_info("CHECK_INFO", "Write check correct!", UVM_LOW);
         end
     endfunction: check_write_mem
-
-    function bit check_item_vs_mem(int src_host_id, 
-                                   addr src_addr,
-                                   hca_pcie_item item, 
-                                   int dst_host_id,
-                                   hca_fifo dst_fifo,
-                                   addr dst_addr,
-                                   uint length);
-        bit [255:0] src_data;
-        bit [255:0] dst_data;
-        int offset = 0;
-        hca_fifo #(.width(256)) src_mem_fifo;
-        src_mem_fifo = mem[src_host_id].read_block(src_addr, length);
-        while (dst_fifo.get_depth() != 0) begin
-            src_data = src_mem_fifo.pop();
-            dst_data = dst_fifo.pop();
-            `uvm_info("CHECK_INFO", $sformatf("src_host_id: %h, src_addr: %h, src_data: %h, dst_host_id: %h, dst_addr: %h, dst_data: %h, length: %d ",
-                src_host_id, src_addr + offset, src_data, dst_host_id, dst_addr + offset, dst_data, length), UVM_LOW);
-            offset = offset + 32;
-            if (src_data != dst_data) begin
-                return 0;
-            end
-            else begin
-                `uvm_info("CHECK_INFO", "item VS. mem check correct!", UVM_LOW);
-            end
-        end
-    endfunction: check_item_vs_mem
 endclass: hca_scoreboard
 `endif 

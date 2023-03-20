@@ -43,6 +43,7 @@ module hca_dut #(
     input                                        a_rdma_clk,
     input                                        a_user_reset,
     input                                        a_user_lnk_up,
+    input                                        a_900M_clk,
     output                                       a_cmd_rst,
 
     //----------------------------------------------------------
@@ -87,6 +88,7 @@ module hca_dut #(
     input                                        b_rdma_clk,
     input                                        b_user_reset,
     input                                        b_user_lnk_up,
+    input                                        b_900M_clk,
     output                                       b_cmd_rst,
 
     input                              [2:0]     b_cfg_max_payload,
@@ -470,6 +472,7 @@ module hca_dut #(
         .PCIe_Interface_rw_data                 (0)
     );
 
+    // link_top_app link_a(
     link_top link_a(
         .i_link_clk                     (a_rdma_clk),
         .i_link_rst_n                   (~a_user_reset),
@@ -477,6 +480,8 @@ module hca_dut #(
         .i_nic_rst_n                    (~a_user_reset),
         .i_mgmt_clk                     (a_rdma_clk),
         .i_mgmt_rst_n                   (~a_user_reset),
+        // .i_app_clk                      (a_900M_clk),
+        // .i_app_rst_n                    (~a_user_reset),
 
         .o_nic_hpc_tx_rdy               (w_hpc_a_out_ready),
         .iv_nic_hpc_tx_axis_data        (wv_hpc_a_out_data),
@@ -572,6 +577,7 @@ module hca_dut #(
     );
 
 
+    // link_top_app link_b(
     link_top link_b(
         .i_link_clk                     (b_rdma_clk),
         .i_link_rst_n                   (~b_user_reset),
@@ -579,6 +585,8 @@ module hca_dut #(
         .i_nic_rst_n                    (~b_user_reset),
         .i_mgmt_clk                     (b_rdma_clk),
         .i_mgmt_rst_n                   (~b_user_reset),
+        // .i_app_clk                      (b_900M_clk),
+        // .i_app_rst_n                    (~b_user_reset),
 
         .o_nic_hpc_tx_rdy               (w_hpc_b_out_ready),
         .iv_nic_hpc_tx_axis_data        (wv_hpc_b_out_data),
