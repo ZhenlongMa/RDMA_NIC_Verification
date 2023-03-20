@@ -71,6 +71,8 @@
 `define VRF_SQ_BYTE_SIZE                4096
 `define VRF_RQ_BYTE_SIZE                4096
 
+`define MPT_ITEM_SIZE                   64
+
 ////////////////////////////////////////////////////////////
 // address
 ////////////////////////////////////////////////////////////
@@ -123,6 +125,11 @@
 `define     MAX_DB_NUM                  30
 `define     MAX_WQE_NUM                 4096
 `define     MAX_PAGE_NUM                1024
+
+`define     MTT_ICM_PAGE_LIMIT          512
+`define     MPT_ICM_PAGE_LIMIT          512
+`define     QPC_ICM_PAGE_LIMIT          1024
+`define     CQC_ICM_PAGE_LIMIT          256
 
 ////////////////////////////////////////////////////////////
 // time
