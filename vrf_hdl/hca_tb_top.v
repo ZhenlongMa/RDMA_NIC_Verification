@@ -152,6 +152,8 @@ module hca_tb_top #(
         string begin_time;
         string end_time;
         int fp;
+        string case_id;
+        $value$plusargs("CASEID=%s", case_id);
         virtual function action_e catch();
             if (get_severity() == UVM_FATAL) begin
                 $system("date +%Y-%m-%d' '%H:%M:%S > end_time");
@@ -161,6 +163,7 @@ module hca_tb_top #(
                 $system("rm end_time");
                 `uvm_info("TIME_INFO", $sformatf("begin time: %s", begin_time), UVM_LOW);
                 `uvm_info("TIME_INFO", $sformatf("end time: %s", end_time), UVM_LOW);
+                $system($sformatf("%s >> fatal_case", case_id));
             end
             return THROW;
         endfunction: catch
