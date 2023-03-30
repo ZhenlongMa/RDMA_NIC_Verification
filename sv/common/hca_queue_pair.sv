@@ -235,7 +235,7 @@ class hca_queue_pair extends uvm_object;
 
             // set ud seg
             if (qp.ctx.flags[23:16] == `HGHCA_QP_ST_UD) begin
-                temp_wqe.ud_seg.port = 32'h0000_1234;
+                temp_wqe.ud_seg.port = 8'b0101_0101;
                 temp_wqe.ud_seg.smac = 48'h0102_0304_0506;
                 temp_wqe.ud_seg.dmac = 48'h0708_090a_0b0c;
                 temp_wqe.ud_seg.sip = 32'h1234_0000;

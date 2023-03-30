@@ -343,7 +343,7 @@ typedef struct {
 } wqe_zero_seg; // used in RECV WQE
 
 typedef struct {
-    bit [31     : 0] port;
+    bit [7      : 0] port;
     bit [47     : 0] smac;
     bit [47     : 0] dmac;
     bit [31     : 0] sip;
