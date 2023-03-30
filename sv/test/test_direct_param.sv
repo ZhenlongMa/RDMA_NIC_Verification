@@ -43,6 +43,7 @@ class test_direct_param extends uvm_test;
     int page_num;
     int sg_num;
     int rc_qp_num;
+    string case_id;
     int uc_qp_num;
     int ud_qp_num;
     int write_wqe_num;
@@ -95,6 +96,10 @@ class test_direct_param extends uvm_test;
         end
         if (host_num > `MAX_HOST_NUM) begin
             `uvm_fatal("PARAM_ERROR", "host num maximum exceeded!");
+        end
+
+        if (!$value$plusargs("CASEID=%s", case_id)) begin
+            `uvm_fatal("PARAM_ERROR", "case_id not get!");
         end
 
         if (!$value$plusargs("PROC_NUM=%d", proc_num)) begin

@@ -7,6 +7,9 @@ host_num = 2
 proc_num = 1
 flag = 0
 flaglen = 4
+max_mr_size = 1024 * 1024 * 1024
+qp_size = 4096 + 4096
+cq_size = 4096
 
 def delete_line(file, key_string, case_class):
     file.write("sed -i '" + key_string + "' ./case/" + case_class + "_log/case" + str(flag).zfill(flaglen) + ".log\n")
@@ -24,30 +27,18 @@ def delete_redundancy(file, case_class):
     delete_line(file, str5, case_class)
 
 def write_file(case_class):
-    # file.write(output_exe + " -uvmDebug +UVM_VERBOSITY=UVM_LOW " + \
-    #                                     "+vpdfile+" + "./case/" + case_class + "_wave/wave" + str(flag).zfill(flaglen) + ".vpd " +\
-    #                                     "+UVM_TESTNAME=" + test_name + \
-    #                                     " +HOST_NUM=2 +PROC_NUM=2 ")
-    # file.write("+RC_QP_NUM=" + str(rc_qp_num) + " ")
-    # file.write("+UC_QP_NUM=" + str(uc_qp_num) + " ")
-    # file.write("+UD_QP_NUM=" + str(ud_qp_num) + " ")
-    # file.write("+DB_NUM=" + str(db_num) + " ")
-    # file.write("+WRITE_WQE_NUM=" + str(write_wqe_num) + " ")
-    # file.write("+READ_WQE_NUM=" + str(read_wqe_num) + " ")
-    # file.write("+SEND_WQE_NUM=" + str(sr_wqe_num) + " ")
-    # file.write("+RECV_WQE_NUM=" + str(sr_wqe_num) + " ")
-    # file.write("+SG_NUM=" + str(sg_num) + " ")
-    # file.write("+DATA_CNT=" + str(data_count) + " ")
-    # file.write("+DATA_UNIT=" + data_unit + " ")
-    # file.write("-l ./case/" + case_class + "_log/case" + str(flag).zfill(flaglen) + ".log ")
-    # file.write("+vcs+lic+wait\n")
-    # file.write("sed -i '/Memory Collision Error/d' ./case/" + case_class + "_log/case" + str(flag).zfill(flaglen) + ".log\n")
-    # file.write("sed -i '/A read was perfor/d' ./case/"+ case_class + "_log/case" + str(flag).zfill(flaglen) + ".log\n")
-    # file.write("sed -i '/TSDN28/d' ./case/" + case_class + "_log/case" + str(flag).zfill(flaglen) + ".log\n")
-    # file.write("sed -i '/If BWEB/d' ./case/" + case_class + "_log/case" + str(flag).zfill(flaglen) + ".log\n")
-    # file.write("sed -i '/^\s*$/d' ./case/" + case_class + "_log/case" + str(flag).zfill(flaglen) + ".log\n")
+    if data_unit == "B":
+        data_amount = data_count
+    elif data_unit == "KB":
+        data_amount = data_count * 1024
+    elif data_unit == "MB":
+        data_amount = data_count * 1024 * 1024
+    else:
+        return
 
-
+    if (data_amount + qp_size + cq_size) * (rc_qp_num + uc_qp_num + ud_qp_num) > max_mr_size:
+        return
+    
     file.write("bsub " + "-J " + str(flag).zfill(flaglen) + " -o " + "./" + case_class +"_log/case" + str(flag).zfill(flaglen) + ".log " + output_exe + \
                 " -uvmDebug +UVM_VERBOSITY=UVM_LOW " + \
                 "+vpdfile+" + "./" + case_class + "_wave/wave" + str(flag).zfill(flaglen) + ".vpd " +\
@@ -64,14 +55,7 @@ def write_file(case_class):
     file.write("+SG_NUM=" + str(sg_num) + " ")
     file.write("+DATA_CNT=" + str(data_count) + " ")
     file.write("+DATA_UNIT=" + data_unit + " ")
-    # file.write("-l ./small_datacount_log/case" + str(flag).zfill(flaglen) + ".log" + " ")
     file.write("+vcs+lic+wait\n")
-    # delete_redundancy(file, case_class)
-    # file.write("sed -i '/Memory Collision Error/d' ./case/" + case_class + "_log/case" + str(flag).zfill(flaglen) + ".log\n")
-    # file.write("sed -i '/A read was perfor/d' ./case/"+ case_class + "_log/case" + str(flag).zfill(flaglen) + ".log\n")
-    # file.write("sed -i '/TSDN28/d' ./case/" + case_class + "_log/case" + str(flag).zfill(flaglen) + ".log\n")
-    # file.write("sed -i '/If BWEB/d' ./case/" + case_class + "_log/case" + str(flag).zfill(flaglen) + ".log\n")
-    # file.write("sed -i '/^\s*$/d' ./case/" + case_class + "_log/case" + str(flag).zfill(flaglen) + ".log\n")
 
 
 file = open("./case/small_datacount.sh", "w")

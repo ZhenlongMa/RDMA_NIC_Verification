@@ -153,14 +153,17 @@ module hca_tb_top #(
         string end_time;
         int fp;
         string case_id;
-        $value$plusargs("CASEID=%s", case_id);
+        int a;
+        string filename;
         virtual function action_e catch();
             if (get_severity() == UVM_FATAL) begin
-                $system("date +%Y-%m-%d' '%H:%M:%S > end_time");
-                fp = $fopen("end_time", "r");
+                if ($value$plusargs("CASEID=%s", case_id));
+                filename = $sformatf("end_time%s", case_id);
+                $system({"date +%Y-%m-%d' '%H:%M:%S > ", filename});
+                fp = $fopen(filename, "r");
                 $fgets(end_time, fp);
                 $fclose(fp);
-                $system("rm end_time");
+                $system($sformatf("rm %s", filename));
                 `uvm_info("TIME_INFO", $sformatf("begin time: %s", begin_time), UVM_LOW);
                 `uvm_info("TIME_INFO", $sformatf("end time: %s", end_time), UVM_LOW);
                 $system($sformatf("%s >> fatal_case", case_id));
