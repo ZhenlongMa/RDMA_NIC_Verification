@@ -149,6 +149,7 @@ class hca_scoreboard extends uvm_scoreboard;
                         while (1) begin
                             duv_fifo[j].get(duv_fifo_item[j]);
                             `uvm_info("SCB_NOTICE", $sformatf("Item got by scb! host_id: %h", j), UVM_LOW);
+
                             // If SCB receives a INTR when reference CQE queue is not empty, fail
                             if (duv_fifo_item[j].item_type == INTR) begin
                                 `uvm_info("SCB_NOTICE", $sformatf("INTR got by scb! host_id: %h", j), UVM_LOW);
@@ -166,12 +167,6 @@ class hca_scoreboard extends uvm_scoreboard;
                                     `uvm_info("SCB_NOTICE", $sformatf("cqe_list clear! host_id: %h", j), UVM_LOW);
                                     break;
                                 end
-                                // if(check_stall() == 1) begin
-                                //     `uvm_fatal("DEAD", "Heart stopped!");
-                                // end
-                                // else begin
-                                //     break;
-                                // end
                             end
                             stall_flag[j] = 0;
                             `uvm_info("SCB_NOTICE", $sformatf("CQE got by scb! host_id: %h", j), UVM_LOW);
@@ -179,20 +174,7 @@ class hca_scoreboard extends uvm_scoreboard;
                             q_list.cq_list[j][0].cqe_list.pop_front();
                             // `uvm_info("CQE_NOTICE", $sformatf("ref CQE got by scb! host_id: %h", j), UVM_LOW);
                             `uvm_info("CQE_NOTICE", $sformatf("ref cqe remaining: %0d! host_id: %h", q_list.cq_list[j][0].cqe_list.size(), j), UVM_LOW);
-                            
-                            // If reference CQE queue is empty, wait for INTR to guarantee communication is complete
-                            // if (q_list.cq_list[j][0].cqe_list.size() == 0) begin
-                            //     duv_fifo[j].get(duv_fifo_item[j]);
-                            //     if (duv_fifo_item[j].item_type == INTR) begin
-                            //         `uvm_info("GLB_STOP_INFO", "global stop launched by scoreboard!", UVM_LOW);
-                            //         break;
-                            //     end
-                            //     else begin
-                            //         `uvm_fatal("ITEM_TYPE_ERROR", "WTF is this?");
-                            //     end
-                            // end
                         end
-                        // break;
                     end
                 join_none
             end
@@ -201,6 +183,7 @@ class hca_scoreboard extends uvm_scoreboard;
             judge();
             for (int i = 0; i < host_num; i++) begin
                 duv_fifo[i].flush();
+                stall_flag[i] = 0;
             end
             `uvm_info("GLB_STOP_INFO", $sformatf("batch finished! db_id: %h", db_id), UVM_LOW);
         end

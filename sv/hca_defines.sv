@@ -232,7 +232,7 @@ typedef struct {
     bit [31     : 0] next_send_psn;
     bit [31     : 0] cqn_snd;
     bit [31     : 0] snd_wqe_base_l;
-    bit [31     : 0] snd_wqe_len;               // total length of SQ in WQE
+    bit [31     : 0] snd_wqe_len;               // total length of SQ in byte
     // bit [31     : 0] snd_db_index;              // no use
     bit [31     : 0] last_acked_psn;
     bit [31     : 0] ssn;                       // no use
@@ -240,7 +240,7 @@ typedef struct {
     bit [31     : 0] ra_buff_indx;              // no use
     bit [31     : 0] cqn_rcv;                   // no use
     bit [31     : 0] rcv_wqe_base_l;
-    bit [31     : 0] rcv_wqe_len;               // total length of RQ in WQE
+    bit [31     : 0] rcv_wqe_len;               // total length of RQ in byte
     // bit [31     : 0] rcv_db_index;              // no use
     bit [31     : 0] qkey;
     bit [31     : 0] rmsn;                      // no use
