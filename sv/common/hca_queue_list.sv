@@ -53,7 +53,7 @@ class hca_queue_list extends uvm_object;
                 return qp_list[host_id][i];
             end
         end
-        `uvm_fatal("GET_QP_ERR", $sformatf("Get QP error! qpn: %h", qpn));
+        `uvm_fatal("GET_QP_ERR", $sformatf("Get QP error! qpn: %h, host_id: %h", qpn, host_id));
     endfunction: get_qp
 
     function hca_comp_queue get_cq(int host_id, bit [31:0] cqn);

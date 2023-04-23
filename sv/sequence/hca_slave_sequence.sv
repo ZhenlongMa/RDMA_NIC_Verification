@@ -124,7 +124,7 @@ class hca_slave_sequence extends uvm_sequence #(hca_pcie_item);
                 int i;
                 sent_item = hca_pcie_item::type_id::create("sent_item");
                 start_item(sent_item);
-                `uvm_info("NOTICE", $sformatf("memory read process begin in slave sequence"), UVM_LOW);
+                // `uvm_info("NOTICE", $sformatf("memory read process begin in slave sequence"), UVM_LOW);
 
                 // set rc descriptor field values in sent_item
                 sent_item.item_type                         = DMA_RSP;
@@ -159,7 +159,7 @@ class hca_slave_sequence extends uvm_sequence #(hca_pcie_item);
                 );
                 while (fifo.get_depth() != 0) begin
                     temp_data = fifo.pop();
-                    `uvm_info("NOTICE", $sformatf("read data content: %h", temp_data), UVM_HIGH);
+                    // `uvm_info("NOTICE", $sformatf("read data content: %h", temp_data), UVM_HIGH);
                     sent_item.data_payload.push_back(temp_data);
                 end
                 finish_item(sent_item);
@@ -182,7 +182,7 @@ class hca_slave_sequence extends uvm_sequence #(hca_pcie_item);
                 while (received_item.data_payload.size() != 0) begin
                     temp_data = received_item.data_payload.pop_front();
                     temp_fifo.push(temp_data);
-                    `uvm_info("NOTICE", $sformatf("write data: %h, addr: %h", temp_data, received_item.rq_addr), UVM_LOW);
+                    // `uvm_info("NOTICE", $sformatf("write data: %h, addr: %h", temp_data, received_item.rq_addr), UVM_LOW);
                 end
 
                 // consider last_be and first_be

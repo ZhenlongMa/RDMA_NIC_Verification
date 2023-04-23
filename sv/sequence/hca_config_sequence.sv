@@ -86,7 +86,7 @@ class hca_config_sequence extends uvm_sequence #(hca_pcie_item);
             start_item(cfg_item);
             if (cfg_item.item_type == HCR) begin
                 `uvm_info("ITEM_INFO", "HCR item received in config sequence", UVM_LOW);
-                print_begin_info(cfg_item);
+                // print_begin_info(cfg_item);
                 write_inbox(cfg_item);
                 set_cq_payload(cfg_item);
                 finish_item(cfg_item);

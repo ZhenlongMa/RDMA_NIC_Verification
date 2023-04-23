@@ -315,10 +315,10 @@ class hca_config_agent extends uvm_object;
         // send write mtt pcie item to sequence
         write_mtt_item.mtt_item.start_index = temp_index;
         phys_addr_pcie = phys_addr;
-        `uvm_info("MTT_NOTICE", $sformatf("write_mtt start index: %h", temp_index), UVM_LOW);
+        // `uvm_info("MTT_NOTICE", $sformatf("write_mtt start index: %h", temp_index), UVM_LOW);
         for (int i = 0; i < page_num; i++) begin
             write_mtt_item.mtt_item.phys_addr.push_back(phys_addr_pcie);
-            `uvm_info("MTT_NOTICE", $sformatf("write_mtt phys addr: %h", phys_addr_pcie), UVM_LOW);
+            // `uvm_info("MTT_NOTICE", $sformatf("write_mtt phys addr: %h", phys_addr_pcie), UVM_LOW);
             phys_addr_pcie += `PAGE_SIZE;
         end
         vseq.cfg_mbx[host_id].try_put(write_mtt_item);
