@@ -309,7 +309,6 @@ class test_direct_param extends uvm_test;
         // initialize HCA
         for (int host_id = 0; host_id < host_num; host_id++) begin
             cfg_agt.init_hca(host_id);
-            // cfg_agt.write_ivt(host_id);
         end
 
         // create EQ, CQ and QP
@@ -328,13 +327,7 @@ class test_direct_param extends uvm_test;
                     for (int i = 0; i < rc_qp_num; i++) begin
                         pd = $urandom();
                         service_type = RC;
-
-                        // create CQ
-                        // cqc_start_addr = cfg_agt.map_icm(a_host_id, `ICM_CQC_TYP, 1); // is this enough?
                         temp_cq = create_cq(proc_id, a_host_id, pd);
-
-                        // create QP, should data MR be created here?
-                        // qpc_start_addr = cfg_agt.map_icm(a_host_id, `ICM_QPC_TYP, 1); // is this enough?
                         qp = create_qp(proc_id, a_host_id, pd, service_type, temp_cq, temp_cq);
                     end
 
@@ -342,13 +335,7 @@ class test_direct_param extends uvm_test;
                     for (int i = 0; i < uc_qp_num; i++) begin
                         pd = $urandom();
                         service_type = UC;
-                        
-                        // create CQ
-                        // cqc_start_addr = cfg_agt.map_icm(a_host_id, `ICM_CQC_TYP, 1); // is this enough?
                         temp_cq = create_cq(proc_id, a_host_id, pd);
-
-                        // create QP, should data MR be created here?
-                        // qpc_start_addr = cfg_agt.map_icm(a_host_id, `ICM_QPC_TYP, 1); // is this enough?
                         qp = create_qp(proc_id, a_host_id, pd, service_type, temp_cq, temp_cq);
                     end
 
@@ -356,13 +343,7 @@ class test_direct_param extends uvm_test;
                     for (int i = 0; i < ud_qp_num; i++) begin
                         pd = $urandom();
                         service_type = UD;
-                        
-                        // create CQ
-                        // cqc_start_addr = cfg_agt.map_icm(a_host_id, `ICM_CQC_TYP, 1); // is this enough?
                         temp_cq = create_cq(proc_id, a_host_id, pd);
-
-                        // create QP, should data MR be created here?
-                        // qpc_start_addr = cfg_agt.map_icm(a_host_id, `ICM_QPC_TYP, 1); // is this enough?
                         qp = create_qp(proc_id, a_host_id, pd, service_type, temp_cq, temp_cq);
                     end
                 end
@@ -378,9 +359,6 @@ class test_direct_param extends uvm_test;
             hca_queue_pair qp_b;
             int flag = 0;
             qp_a = q_list.qp_list[0][i];
-            // if (qp_a.ctx.flags[15:0] != 16'h0000 || qp_a.ctx.flags[15:0] != 16'h0001) begin
-            //     continue;
-            // end
             if (qp_a.ctx.local_qpn % 2 == 0) begin
                 for (int j = 0; j < q_list.qp_list[1].size(); j++) begin
                     if (q_list.qp_list[1][j].ctx.local_qpn == qp_a.ctx.local_qpn + 1) begin
@@ -453,9 +431,11 @@ class test_direct_param extends uvm_test;
             for (int host_id = 0; host_id < host_num; host_id++) begin
 
                 //only host 0 can send
-                if (host_id == 1) begin
-                    break;
-                end
+                `ifdef ONE_SIDE_LAUNCH
+                    if (host_id == 1) begin
+                        break;
+                    end
+                `endif
                 
                 fork
                     automatic int a_host_id = host_id;
@@ -539,13 +519,10 @@ class test_direct_param extends uvm_test;
         int remote_host_id;
         int host_id;
         bit [10:0] proc_id;
-        // int sq_wqe_num = send_wqe_num + read_wqe_num + write_wqe_num;
 
         host_id = qp.host_id;
         proc_id = qp.proc_id;
         remote_qp = qp.remote_qp;
-        // remote_qpn = remote_qp.ctx.local_qpn;
-
 
         if (host_id == 0) begin
             remote_host_id = 1;
@@ -555,9 +532,11 @@ class test_direct_param extends uvm_test;
         end
 
         // host 1 is not sender
-        if (host_id == 1) begin
-            return;
-        end
+        `ifdef ONE_SIDE_LAUNCH
+            if (host_id == 1) begin
+                return;
+            end
+        `endif
 
         /*------------------------------------------------------------------
         // MEMORY SPACE FOR NETWORK DATA
