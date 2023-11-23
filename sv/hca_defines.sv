@@ -194,15 +194,17 @@ typedef enum {OP_INIT, WRITE, READ, SEND, RECV} e_op_type;
 typedef bit [10:0] pid_t;
 
 typedef struct {
-    bit [7      : 0] nreq;
-    bit [15     : 0] sq_head;
-    bit              f0;
-    bit [4      : 0] opcode;
+    bit [23     : 0] sq_head;
+    bit              fence;
     bit [23     : 0] qp_num;
-    bit [7      : 0] size0;
     bit [10     : 0] proc_id;
-    // int host_id;
-} doorbell;
+} sq_doorbell;
+
+typedef struct {
+    bit [23     : 0] rq_head;
+    bit [23     : 0] qp_num;
+    bit [10     : 0] proc_id;
+} rq_doorbell;
 
 typedef struct {
     bit [31     : 0] opt_param_mask;
@@ -311,20 +313,11 @@ typedef struct {
 
 //------------------------WQE Begin-----------------------//
 typedef struct {
-    bit [25     : 0] next_wqe;
-    bit [4      : 0] next_opcode;
-    bit [23     : 0] next_ee;
-    bit              next_dbd;
-    bit              next_fence;
-    bit [5      : 0] next_wqe_size; // 16B
-    bit              cq;
-    bit              evt;
-    bit              solicit;
+    bit [7      : 0] wqe_size;
+    bit [23     : 0] wqe_addr;
+    bit [4      : 0] opcode;
     bit [31     : 0] imm_data;
-    bit              res_0;
-    bit              res_1;
-    bit [27     : 0] res_2;
-} wqe_next_seg;
+} wqe_meta_seg;
 
 typedef struct {
     bit [31     : 0] byte_num;
@@ -357,7 +350,7 @@ typedef struct {
 } wqe_ud_seg;
 
 typedef struct {
-    wqe_next_seg next_seg;
+    wqe_meta_seg meta_seg;
     wqe_inline_seg inline_seg;
     wqe_data_seg_unit data_seg[$];
     wqe_raddr_seg raddr_seg;

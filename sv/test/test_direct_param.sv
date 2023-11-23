@@ -451,6 +451,7 @@ class test_direct_param extends uvm_test;
                                     if (send_wqe_num != 0) begin
                                         opcode = `VERBS_SEND;
                                         send_db(a_host_id, proc_id, db_id, qp, opcode);
+                                        send_db(b_host_id, proc_id, db_id, qp.remote_qp, 99);
                                     end
                                     else if (write_wqe_num != 0 && qp.ctx.flags[23:16] != `HGHCA_QP_ST_UD) begin
                                         opcode = `VERBS_RDMA_WRITE;
@@ -540,6 +541,7 @@ class test_direct_param extends uvm_test;
 
         /*------------------------------------------------------------------
         // MEMORY SPACE FOR NETWORK DATA
+        // little address ----------------------------> large address
         // RC:
         // |    SEND    |  RECEIVE  |   WRITE   |   READ    |
         // UC:
@@ -750,14 +752,11 @@ class test_direct_param extends uvm_test;
     // invoked       : by single_process_cfg
     //------------------------------------------------------------------------------
     function bit connect_qp(int host_id_a, hca_queue_pair qp_a, int host_id_b, hca_queue_pair qp_b);
-        // local.next_send_psn == local.unacked_psn == remote.next_recv_psn
         qp_a.ctx.remote_qpn = qp_b.ctx.local_qpn;
         qp_b.ctx.remote_qpn = qp_a.ctx.local_qpn;
         qp_a.ctx.rnr_nextrecvpsn = qp_b.ctx.next_send_psn;
         qp_b.ctx.rnr_nextrecvpsn = qp_a.ctx.next_send_psn;
-
         qp_a.connect(qp_b);
-
         cfg_agt.modify_qp(host_id_a, qp_a.ctx);
         cfg_agt.modify_qp(host_id_b, qp_b.ctx);
         `uvm_info("CONNECT_QP_INFO", 
@@ -775,42 +774,35 @@ class test_direct_param extends uvm_test;
     task send_db(int host_id, bit [10:0] proc_id, int db_id, hca_queue_pair qp, bit [4:0] op_code);
         hca_pcie_item doorbell_item;
         bit [15:0] first_wqe_byte_offset;
-        doorbell db;
-        doorbell_item = hca_pcie_item::type_id::create("doorbell_item", this);
-        first_wqe_byte_offset = qp.sq_tail % qp.sq_byte_size;
-        // What is this?
-        if (first_wqe_byte_offset[3:0] != 0) begin
-            `uvm_fatal("QP_ERR", $sformatf("first_wqe_byte_offset is not zero! host_id: %h, qpn: %h, sq_tail: %h", 
-                host_id, qp.ctx.local_qpn, qp.sq_tail));
-        end
-        db.sq_head = first_wqe_byte_offset[15:4];
-        // first_wqe_byte_offset = db_id * this.wqe_num * `SQ_WQE_BYTE_LEN;
-        // db.sq_head = db_id * this.wqe_num * `SQ_WQE_BYTE_LEN;
-        db.f0 = 0;
-        db.opcode = op_code;
-        db.qp_num = qp.ctx.local_qpn;
-        // db.host_id = host_id;
-        
-        // set size0
-        if (qp.ctx.flags[23:16] == `HGHCA_QP_ST_UD) begin
-            if (op_code == `VERBS_SEND) begin
-                db.size0 = sg_num + 4;
+        if (op_code != 99) begin
+            sq_doorbell send_db;
+            doorbell_item = hca_pcie_item::type_id::create("doorbell_item", this);
+            first_wqe_byte_offset = qp.sq_tail % qp.sq_byte_size;
+            if (first_wqe_byte_offset[3:0] != 0) begin
+                `uvm_fatal("QP_ERR", $sformatf("first_wqe_byte_offset is not zero! host_id: %h, qpn: %h, sq_tail: %h", 
+                    host_id, qp.ctx.local_qpn, qp.sq_tail));
             end
-            else begin
-                `uvm_fatal("OP TYPE ERROR", $sformatf("op type error! qpn: %h, host id: %h, op code: %h", qp.ctx.local_qpn, host_id, op_code));
-            end
+            send_db.sq_head = first_wqe_byte_offset[15:4];
+            send_db.fence = 0;
+            send_db.qp_num = qp.ctx.local_qpn;
+            send_db.proc_id = proc_id;
+            doorbell_item.item_type = DOORBELL;
+            doorbell_item.send_db = send_db;
         end
         else begin
-            if (op_code == `VERBS_SEND) begin
-                db.size0 = sg_num + 1;
+            rq_doorbell recv_db;
+            doorbell_item = hca_pcie_item::type_id::create("doorbell_item", this);
+            first_wqe_byte_offset = qp.rq_tail % qp.rq_byte_size;
+            if (first_wqe_byte_offset[3:0] != 0) begin
+                `uvm_fatal("QP_ERR", $sformatf("first_wqe_byte_offset is not zero! host_id: %h, qpn: %h, sq_tail: %h", 
+                    host_id, qp.ctx.local_qpn, qp.sq_tail));
             end
-            else begin
-                db.size0 = sg_num + 2;
-            end
+            recv_db.rq_head = first_wqe_byte_offset[15:4];
+            recv_db.qp_num = qp.ctx.local_qpn;
+            recv_db.proc_id = proc_id;
+            doorbell_item.item_type = DOORBELL;
+            doorbell_item.recv_db = recv_db;
         end
-        db.proc_id = proc_id;
-        doorbell_item.item_type = DOORBELL;
-        doorbell_item.db = db;
         if (vseq.comm_mbx[host_id].try_put(doorbell_item) == 0) begin
             `uvm_fatal("MAILBOX_PUT_ERROR", "put comm item fail!")
         end
@@ -902,8 +894,6 @@ class test_direct_param extends uvm_test;
         qp.mem = env.mem[host_id];
         qp.sq_byte_size = `VRF_SQ_BYTE_SIZE;
         qp.rq_byte_size = `VRF_RQ_BYTE_SIZE;
-        // qp.sq_header = 0;
-        // qp.sq_tail = 0;
         q_list.qp_list[host_id].push_back(qp);
         `uvm_info("CREATE_QP_INFO", $sformatf("create QP finished! host_id: %h, QP num: %0d, PD: %h, SQ Key: %h, RQ Key: %h", 
             host_id, qp.ctx.local_qpn, qpc.pd, sq_mpt.key, rq_mpt.key), UVM_LOW);
@@ -986,12 +976,6 @@ class test_direct_param extends uvm_test;
         end
 
         // set amount of mtt entries and size of memory region
-        // if (size % page_size == 0) begin
-        //     mtt_num = size / page_size;
-        // end
-        // else begin
-        //     mtt_num = size / page_size + 1;
-        // end
         if ((size + start_vaddr[11:0]) % page_size == 0) begin
             mtt_num = (size + start_vaddr[11:0]) / page_size;
             mr_size = mtt_num * `PAGE_SIZE;
@@ -1072,7 +1056,6 @@ class test_direct_param extends uvm_test;
         end
         for (int i = 0; i < beat_num; i++) begin
             for (int j = 0; j < 32; j++) begin
-                // write_data[j] = (i * 32 + j) % 256;
                 write_data[j] = $urandom();
             end
             data_fifo.push(write_data);
