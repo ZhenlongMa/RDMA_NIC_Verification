@@ -871,6 +871,10 @@ class test_direct_param extends uvm_test;
         if (icm_vaddr.qpc_cap_left[host_id] < `QPC_ENTRY_SZ) begin
             cfg_agt.map_icm(host_id, `ICM_QPC_TYP, 1);
         end
+        icm_vaddr.qpc_cap_left[host_id] -= `QPC_ENTRY_SZ;
+        if (icm_vaddr.qpc_cap_left[host_id] < 0) begin
+            `uvm_fatal("ICM_ERR", $sformatf("ICM CAPACITY OUT!"));
+        end
         // set QP context
         qpc.opt_param_mask = $urandom();
         qpc.flags[31:28] = 4'b0011;

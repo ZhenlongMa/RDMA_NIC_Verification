@@ -534,7 +534,8 @@ typedef struct {
 `define MAX_PKEYS    8'd1
 `define MAX_MTT_SEG  8'd3 //
 `define QPC_ENTRY_SZ 16'd256
-`define CQC_ENTRY_SZ 16'd128
+// `define CQC_ENTRY_SZ 16'd128
+`define CQC_ENTRY_SZ 16'd64
 `define EQC_ENTRY_SZ 16'd64
 `define MPT_ENTRY_SZ 16'd64
 
