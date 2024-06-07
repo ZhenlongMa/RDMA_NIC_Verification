@@ -390,6 +390,7 @@ class hca_queue_pair extends uvm_object;
         int sg_id;
         bit [10:0] proc_id;
         int host_id;
+        int wqe_size;
         hca_fifo #(.width(256)) data_fifo;
         proc_id = qp.proc_id;
         host_id = qp.host_id;
@@ -410,6 +411,7 @@ class hca_queue_pair extends uvm_object;
         // WRITE/READ WQE:
         // next_seg(16B) + raddr_seg(16B) + data_seg(16B x n)
         if (op_type == WRITE || op_type == READ) begin
+            wqe_size = 32 + sg_num * 16;
             raw_data = 0;
             data_fifo.clean();
             raw_data[127:0] = {
@@ -448,7 +450,7 @@ class hca_queue_pair extends uvm_object;
                 end
                 sg_id++;
             end
-            mem.write_block(base_paddr + wqe_offset, data_fifo, 32 + sg_num * 16);
+            mem.write_block(base_paddr + wqe_offset, data_fifo, wqe_size);
             if (32 + sg_num * 16 > `SQ_WQE_BYTE_LEN) begin
                 `uvm_fatal("WQE_SZ_ERR", $sformatf("WRITE/READ WQE size error! sg_num: %0d", sg_num));
             end
@@ -490,7 +492,8 @@ class hca_queue_pair extends uvm_object;
                     end
                     sg_id++;
                 end
-                mem.write_block(base_paddr + wqe_offset, data_fifo, 16 + sg_num * 16);
+                wqe_size = 16 + sg_num * 16;
+                mem.write_block(base_paddr + wqe_offset, data_fifo, wqe_size);
                 if (16 + sg_num * 16 > `SQ_WQE_BYTE_LEN) begin
                     `uvm_fatal("WQE_SZ_ERR", $sformatf("RC/UC SEND WQE size error! sg_num: %0d", sg_num));
                 end
@@ -547,6 +550,7 @@ class hca_queue_pair extends uvm_object;
                     end
                     sg_id++;
                 end
+                wqe_size = 64 + sg_num * 16;
                 mem.write_block(base_paddr + wqe_offset, data_fifo, 64 + sg_num * 16);
                 if (64 + sg_num * 16 > `SQ_WQE_BYTE_LEN) begin
                     `uvm_fatal("WQE_SZ_ERR", $sformatf("UD SEND WQE size error! sg_num: %0d", sg_num));
@@ -598,9 +602,22 @@ class hca_queue_pair extends uvm_object;
             if (sg_id != sg_num) begin
                 `uvm_fatal("SG_NUM_ERROR", $sformatf("RECV sg_id: %0d, sg_num: %0d", sg_id, sg_num));
             end
-            mem.write_block(base_paddr + wqe_offset, data_fifo, 32 + sg_num * 16);
+            wqe_size = 32 + sg_num * 16;
+            mem.write_block(base_paddr + wqe_offset, data_fifo, wqe_size);
             if (32 + sg_num * 16 > `RQ_WQE_BYTE_LEN) begin
                 `uvm_fatal("WQE_SZ_ERR", $sformatf("RECV WQE size error! sg_num: %0d", sg_num));
+            end
+        end
+        if (op_type == RECV) begin
+            if (wqe_offset + wqe_size > rq_byte_size) begin
+                `uvm_fatal("QUEUE_OVERFLOW", $sformatf("RQ overflow! wqe_offset: %0d, wqe_size: %0d, rq_byte_size: %0d", 
+                    wqe_offset, wqe_size, rq_byte_size);
+            end
+        end
+        else begin
+            if (wqe_offset + wqe_size > sq_byte_size) begin
+                `uvm_fatal("QUEUE_OVERFLOW", $sformatf("SQ overflow! wqe_offset: %0d, wqe_size: %0d, rq_byte_size: %0d", 
+                    wqe_offset, wqe_size, sq_byte_size);
             end
         end
         `uvm_info("MEM_INFO", $sformatf("write wqe finished, host_id: %h, addr: %h, op_type: %h", qp.host_id, base_paddr + wqe_offset, op_type), UVM_LOW);
