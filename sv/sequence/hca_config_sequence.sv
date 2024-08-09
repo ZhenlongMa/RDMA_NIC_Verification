@@ -241,7 +241,7 @@ class hca_config_sequence extends uvm_sequence #(hca_pcie_item);
                     inbox_data[i + 8] = temp_item.qp_ctx.sip[31 - i * 8 -: 8];
                 end
                 for (int i = 0; i < 4; i++) begin
-                    inbox_data[i + 12] = temp_item.qp_ctx.dip[47 - i * 8 -: 8];
+                    inbox_data[i + 12] = temp_item.qp_ctx.dip[31 - i * 8 -: 8];
                 end
                 for (int i = 0; i < 12; i++) begin
                     inbox_data[i + 16] = 0;
