@@ -409,6 +409,10 @@ class test_direct_param extends uvm_test;
                     `uvm_fatal("CONNECT_QP_ERR", $sformatf("qp_b not found! qp_a: %h", qp_a.ctx.local_qpn));
                 end
             end
+            `ifdef QUERY_QP_TEST
+                cfg_agt.query_qp(host_id_a, qp_a.ctx.local_qpn);
+                cfg_agt.query_qp(host_id_b, qp_b.ctx.local_qpn);
+            `endif
         end
 
         // write data into data region
@@ -846,7 +850,8 @@ class test_direct_param extends uvm_test;
         hca_comp_queue send_cq, 
         hca_comp_queue recv_cq
     );
-        bit [31:0] qp_num = 0;
+        // bit [31:0] qp_num = 0;
+        bit [31:0] qp_num = 2;
         qp_context qpc;
         mpt sq_mpt;
         mpt rq_mpt;
