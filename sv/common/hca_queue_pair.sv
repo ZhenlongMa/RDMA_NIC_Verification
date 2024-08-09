@@ -390,7 +390,9 @@ class hca_queue_pair extends uvm_object;
         int sg_id;
         bit [10:0] proc_id;
         int host_id;
-        int wqe_size;
+        bit [7 : 0] op;
+        bit [7 : 0] desc_size;
+        // int wqe_size;
         hca_fifo #(.width(256)) data_fifo;
         proc_id = qp.proc_id;
         host_id = qp.host_id;
@@ -411,14 +413,20 @@ class hca_queue_pair extends uvm_object;
         // WRITE/READ WQE:
         // next_seg(16B) + raddr_seg(16B) + data_seg(16B x n)
         if (op_type == WRITE || op_type == READ) begin
-            wqe_size = 32 + sg_num * 16;
+            if (op_type == WRITE) begin
+                op = `VERBS_RDMA_WRITE;
+            end
+            else if (op_type == READ) begin
+                op = `VERBS_RDMA_READ;
+            end
+            desc_size = 32 + sg_num * 16;
             raw_data = 0;
             data_fifo.clean();
             raw_data[127:0] = {
-                temp_wqe.meta_seg.imm_data,
-                32'b0,
-                27'b0, temp_wqe.meta_seg.opcode,
-                temp_wqe.meta_seg.wqe_addr, temp_wqe.meta_seg.wqe_size
+                temp_wqe.next_seg.imm_data,
+                {8'b0}, op, desc_size, 2'b0, temp_wqe.next_seg.cq, temp_wqe.next_seg.evt, temp_wqe.next_seg.solicit, 1'b0,
+                temp_wqe.next_seg.next_ee, temp_wqe.next_seg.next_dbd, temp_wqe.next_seg.next_fence, temp_wqe.next_seg.next_wqe_size,
+                temp_wqe.next_seg.next_wqe, 1'b0, temp_wqe.next_seg.next_opcode
             };
             raw_data[255:128] = {
                 32'b0,
@@ -450,22 +458,24 @@ class hca_queue_pair extends uvm_object;
                 end
                 sg_id++;
             end
-            mem.write_block(base_paddr + wqe_offset, data_fifo, wqe_size);
+            mem.write_block(base_paddr + wqe_offset, data_fifo, desc_size);
             if (32 + sg_num * 16 > `SQ_WQE_BYTE_LEN) begin
                 `uvm_fatal("WQE_SZ_ERR", $sformatf("WRITE/READ WQE size error! sg_num: %0d", sg_num));
             end
         end
         else if (op_type == SEND) begin
+            op = `VERBS_SEND;
             // RC/UC SEND_WQE:
             // next_seg(16B) + data_seg (16B x n)
             if (qp.ctx.flags[23:16] != `HGHCA_QP_ST_UD) begin // RC/UC
+                desc_size = 16 + sg_num * 16;
                 raw_data = 0;
                 data_fifo.clean();
                 raw_data[127:0] = {
-                    temp_wqe.meta_seg.imm_data,
-                    32'b0,
-                    27'b0, temp_wqe.meta_seg.opcode,
-                    temp_wqe.meta_seg.wqe_addr, temp_wqe.meta_seg.wqe_size
+                    temp_wqe.next_seg.imm_data,
+                    {8'b0}, op, desc_size, 2'b0, temp_wqe.next_seg.cq, temp_wqe.next_seg.evt, temp_wqe.next_seg.solicit, temp_wqe.next_seg.res_1,
+                    temp_wqe.next_seg.next_ee, temp_wqe.next_seg.next_dbd, temp_wqe.next_seg.next_fence, temp_wqe.next_seg.next_wqe_size,
+                    temp_wqe.next_seg.next_wqe, temp_wqe.next_seg.res_0, temp_wqe.next_seg.next_opcode
                 };
                 sg_id = 0;
                 while (temp_wqe.data_seg.size() != 0) begin
@@ -492,8 +502,7 @@ class hca_queue_pair extends uvm_object;
                     end
                     sg_id++;
                 end
-                wqe_size = 16 + sg_num * 16;
-                mem.write_block(base_paddr + wqe_offset, data_fifo, wqe_size);
+                mem.write_block(base_paddr + wqe_offset, data_fifo, desc_size);
                 if (16 + sg_num * 16 > `SQ_WQE_BYTE_LEN) begin
                     `uvm_fatal("WQE_SZ_ERR", $sformatf("RC/UC SEND WQE size error! sg_num: %0d", sg_num));
                 end
@@ -501,13 +510,14 @@ class hca_queue_pair extends uvm_object;
             // UD SEND WQE:
             // next_seg(16B) + ud_seg(48B) + data_seg(16B x n)
             else if (qp.ctx.flags[23:16] == `HGHCA_QP_ST_UD) begin
+                desc_size = 64 + sg_num * 16;
                 raw_data = 0;
                 data_fifo.clean();
                 raw_data[127:0] = {
-                    temp_wqe.meta_seg.imm_data,
-                    32'b0,
-                    27'b0, temp_wqe.meta_seg.opcode,
-                    temp_wqe.meta_seg.wqe_addr, temp_wqe.meta_seg.wqe_size
+                    temp_wqe.next_seg.imm_data,
+                    {8'b0}, op, desc_size, 2'b0, temp_wqe.next_seg.cq, temp_wqe.next_seg.evt, temp_wqe.next_seg.solicit, temp_wqe.next_seg.res_1,
+                    temp_wqe.next_seg.next_ee, temp_wqe.next_seg.next_dbd, temp_wqe.next_seg.next_fence, temp_wqe.next_seg.next_wqe_size,
+                    temp_wqe.next_seg.next_wqe, temp_wqe.next_seg.res_0, temp_wqe.next_seg.next_opcode
                 };
                 raw_data[255:128] = {
                     temp_wqe.ud_seg.dmac[47:16],
@@ -558,16 +568,17 @@ class hca_queue_pair extends uvm_object;
             end
         end
         else if (op_type == RECV) begin
+            desc_size = 32 + sg_num * 16;
             // RECV WQE:
             // next_seg(16B) + data_seg(16B x n) + zero_seg(16B)
             // if (qp.ctx.flags[23:16] != `HGHCA_QP_ST_UD) begin
             raw_data = 0;
             data_fifo.clean();
             raw_data[127:0] = {
-                temp_wqe.meta_seg.imm_data,
-                32'b0,
-                27'b0, temp_wqe.meta_seg.opcode,
-                temp_wqe.meta_seg.wqe_addr, temp_wqe.meta_seg.wqe_size
+                temp_wqe.next_seg.imm_data,
+                {16'b0}, desc_size, 2'b0, temp_wqe.next_seg.cq, temp_wqe.next_seg.evt, temp_wqe.next_seg.solicit, temp_wqe.next_seg.res_1,
+                temp_wqe.next_seg.next_ee, temp_wqe.next_seg.next_dbd, temp_wqe.next_seg.next_fence, temp_wqe.next_seg.next_wqe_size,
+                temp_wqe.next_seg.next_wqe, temp_wqe.next_seg.res_0, temp_wqe.next_seg.next_opcode
             };
             sg_id = 0;
             while (temp_wqe.data_seg.size() != 0) begin
@@ -602,22 +613,21 @@ class hca_queue_pair extends uvm_object;
             if (sg_id != sg_num) begin
                 `uvm_fatal("SG_NUM_ERROR", $sformatf("RECV sg_id: %0d, sg_num: %0d", sg_id, sg_num));
             end
-            wqe_size = 32 + sg_num * 16;
-            mem.write_block(base_paddr + wqe_offset, data_fifo, wqe_size);
+            mem.write_block(base_paddr + wqe_offset, data_fifo, desc_size);
             if (32 + sg_num * 16 > `RQ_WQE_BYTE_LEN) begin
                 `uvm_fatal("WQE_SZ_ERR", $sformatf("RECV WQE size error! sg_num: %0d", sg_num));
             end
         end
         if (op_type == RECV) begin
-            if (wqe_offset + wqe_size > rq_byte_size) begin
+            if (wqe_offset + desc_size > rq_byte_size) begin
                 `uvm_fatal("QUEUE_OVERFLOW", $sformatf("RQ overflow! wqe_offset: %0d, wqe_size: %0d, rq_byte_size: %0d", 
-                    wqe_offset, wqe_size, rq_byte_size);
+                    wqe_offset, desc_size, rq_byte_size));
             end
         end
         else begin
-            if (wqe_offset + wqe_size > sq_byte_size) begin
+            if (wqe_offset + desc_size > sq_byte_size) begin
                 `uvm_fatal("QUEUE_OVERFLOW", $sformatf("SQ overflow! wqe_offset: %0d, wqe_size: %0d, rq_byte_size: %0d", 
-                    wqe_offset, wqe_size, sq_byte_size);
+                    wqe_offset, desc_size, sq_byte_size));
             end
         end
         `uvm_info("MEM_INFO", $sformatf("write wqe finished, host_id: %h, addr: %h, op_type: %h", qp.host_id, base_paddr + wqe_offset, op_type), UVM_LOW);

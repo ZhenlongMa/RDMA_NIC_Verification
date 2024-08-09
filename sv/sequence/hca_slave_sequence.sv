@@ -182,7 +182,10 @@ class hca_slave_sequence extends uvm_sequence #(hca_pcie_item);
                 while (received_item.data_payload.size() != 0) begin
                     temp_data = received_item.data_payload.pop_front();
                     temp_fifo.push(temp_data);
-                    // `uvm_info("NOTICE", $sformatf("write data: %h, addr: %h", temp_data, received_item.rq_addr), UVM_LOW);
+                    if (received_item.rq_addr == `OUTBOX_ADDR) begin
+                        // `uvm_info("NOTICE", $sformatf("write data: %h, addr: %h", temp_data, received_item.rq_addr), UVM_LOW);
+                        `uvm_info("NOTICE", $sformatf("outbox: %h, addr: %h", temp_data, received_item.rq_addr), UVM_LOW);
+                    end
                 end
 
                 // consider last_be and first_be
