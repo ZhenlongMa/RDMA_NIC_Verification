@@ -518,126 +518,130 @@ class hca_ref_model extends uvm_component;
         port2scb[host_id].write(exp_item);
     endtask: send_read_mbx_req
 
-    // task process_db(bit [10:0] proc_id, int host_id, doorbell db);
-    //     wqe temp_wqe;
-    //     int flag;
-    //     hca_queue_pair qp;
-    //     mpt sq_mpt;
-    //     wqe no_use_wqe;
+    task process_db(bit [10:0] proc_id, int host_id, doorbell db);
+        wqe temp_wqe;
+        // temp_wqe = get_wqe_db(db);
+        int flag;
+        // qp_context qp_ctx;
+        hca_queue_pair qp;
+        mpt sq_mpt;
+        // hca_pcie_item exp_item;
+        wqe no_use_wqe;
 
-    //     // look for qp context, do not need to send memory request
-    //     flag = 0;
-    //     for (int i = 0; i < q_list.qp_list.size(); i++) begin
-    //         if (q_list.qp_list[host_id][i].ctx.local_qpn == db.qp_num) begin
-    //             flag = 1;
-    //             qp = q_list.qp_list[host_id][i];
-    //             break;
-    //         end
-    //     end
-    //     if (flag == 0) begin
-    //         `uvm_fatal("NO_QPC", $sformatf("No qp context found in reference model! db.qpn: %h", db.qp_num));
-    //     end
-    //     `uvm_info("NOTICE", $sformatf("QP context found! QP number: %h", db.qp_num), UVM_LOW);
+        // look for qp context, do not need to send memory request
+        flag = 0;
+        for (int i = 0; i < q_list.qp_list.size(); i++) begin
+            if (q_list.qp_list[host_id][i].ctx.local_qpn == db.qp_num) begin
+                flag = 1;
+                qp = q_list.qp_list[host_id][i];
+                break;
+            end
+        end
+        if (flag == 0) begin
+            `uvm_fatal("NO_QPC", $sformatf("No qp context found in reference model! db.qpn: %h", db.qp_num));
+        end
+        `uvm_info("NOTICE", $sformatf("QP context found! QP number: %h", db.qp_num), UVM_LOW);
 
-    //     // look for wqe, need to send memory request
-    //     // look for sq mpt
-    //     flag = 0;
-    //     for (int i = 0; i < mem_info.mem_region[host_id].size(); i++) begin
-    //         if (mem_info.mem_region[host_id][i].key == qp.ctx.snd_wqe_base_l) begin
-    //             sq_mpt = mem_info.mem_region[host_id][i];
-    //             flag = 1;
-    //             break;
-    //         end
-    //     end
-    //     if (flag == 0) begin
-    //         `uvm_fatal("NO_MPT", "No send mpt item found in reference model!");
-    //     end
-    //     if (sq_mpt.pd != qp.ctx.pd) begin
-    //         `uvm_fatal("ILLEGAL_MR_ACCESS", $sformatf("Different pd between qp and mpt! qp pd: %h, mpt pd: %h", qp.ctx.pd, sq_mpt.pd));
-    //     end
-    //     else begin
-    //         `uvm_info("NOTICE", $sformatf("PD match! PD: %h", qp.ctx.pd), UVM_LOW);
-    //     end
-    //     `uvm_info("NOTICE", $sformatf("SQ MPT found! key: %h", qp.ctx.snd_wqe_base_l), UVM_LOW);
-    //     // send memory read request
+        // look for wqe, need to send memory request
+        // look for sq mpt
+        flag = 0;
+        for (int i = 0; i < mem_info.mem_region[host_id].size(); i++) begin
+            if (mem_info.mem_region[host_id][i].key == qp.ctx.snd_wqe_base_l) begin
+                sq_mpt = mem_info.mem_region[host_id][i];
+                flag = 1;
+                break;
+            end
+        end
+        if (flag == 0) begin
+            `uvm_fatal("NO_MPT", "No send mpt item found in reference model!");
+        end
+        if (sq_mpt.pd != qp.ctx.pd) begin
+            `uvm_fatal("ILLEGAL_MR_ACCESS", $sformatf("Different pd between qp and mpt! qp pd: %h, mpt pd: %h", qp.ctx.pd, sq_mpt.pd));
+        end
+        else begin
+            `uvm_info("NOTICE", $sformatf("PD match! PD: %h", qp.ctx.pd), UVM_LOW);
+        end
+        `uvm_info("NOTICE", $sformatf("SQ MPT found! key: %h", qp.ctx.snd_wqe_base_l), UVM_LOW);
+        // send memory read request
         
-    //     // get wqe
-    //     temp_wqe = get_wqe(proc_id, host_id, 1, db, no_use_wqe, qp);
-    //     send_cqe(proc_id, host_id, qp);
-    // endtask: process_db
+        // get wqe
+        temp_wqe = get_wqe(proc_id, host_id, 1, db, no_use_wqe, qp);
+        // process_wqe(proc_id, host_id, qp, db.opcode, temp_wqe, db.sq_head);
+        send_cqe(proc_id, host_id, qp);
+    endtask: process_db
 
-    // function wqe get_wqe(bit [10:0] proc_id, int host_id, int source_type, doorbell db = 0, wqe prev_wqe = 0, hca_queue_pair qp); // source_type: 1 - doorbell
-    //                                                                                                                               //              2 - previous WQE
-    //                                                                                                                               //              3 - RQ
-    //     // 1: send memory read request to scoreboard
-    //     // 2: get wqe from q_list.qp_list
-    //     wqe result_wqe;
-    //     addr snd_wqe_phys_addr;
-    //     hca_pcie_item exp_item;
-    //     addr desc_byte_len;
-    //     addr recv_wqe_phys_addr;
+    function wqe get_wqe(bit [10:0] proc_id, int host_id, int source_type, doorbell db = 0, wqe prev_wqe = 0, hca_queue_pair qp); // source_type: 1 - doorbell
+                                                                                                                                  //              2 - previous WQE
+                                                                                                                                  //              3 - RQ
+        // 1: send memory read request to scoreboard
+        // 2: get wqe from q_list.qp_list
+        wqe result_wqe;
+        addr snd_wqe_phys_addr;
+        hca_pcie_item exp_item;
+        addr desc_byte_len;
+        addr recv_wqe_phys_addr;
 
-    //     if (source_type == 1) begin
-    //         // snd_wqe_phys_addr = {5'b0, proc_id, 14'h1, qp.ctx.local_qpn[13:0], 20'h0} + db.sq_head;
-    //         snd_wqe_phys_addr = `PA_QP(proc_id, qp.ctx.local_qpn) + db.sq_head;
-    //     end
-    //     else if (source_type == 2) begin
-    //         // snd_wqe_phys_addr = {5'b0, proc_id, 14'h1, qp.ctx.local_qpn[13:0], 20'h0} + prev_wqe.next_seg.next_wqe;
-    //         snd_wqe_phys_addr = `PA_QP(proc_id, qp.ctx.local_qpn) + prev_wqe.next_seg.next_wqe;
-    //     end
-    //     else begin
-    //         // recv_wqe_phys_addr = {5'b0, proc_id, 14'h1, qp.ctx.local_qpn[13:0], 20'h0} + `SQ_RQ_GAP + qp.sq_tail;
-    //         snd_wqe_phys_addr = `PA_QP(proc_id, qp.ctx.local_qpn) + `SQ_RQ_GAP + qp.sq_tail;
-    //     end
+        if (source_type == 1) begin
+            // snd_wqe_phys_addr = {5'b0, proc_id, 14'h1, qp.ctx.local_qpn[13:0], 20'h0} + db.sq_head;
+            snd_wqe_phys_addr = `PA_QP(proc_id, qp.ctx.local_qpn) + db.sq_head;
+        end
+        else if (source_type == 2) begin
+            // snd_wqe_phys_addr = {5'b0, proc_id, 14'h1, qp.ctx.local_qpn[13:0], 20'h0} + prev_wqe.next_seg.next_wqe;
+            snd_wqe_phys_addr = `PA_QP(proc_id, qp.ctx.local_qpn) + prev_wqe.next_seg.next_wqe;
+        end
+        else begin
+            // recv_wqe_phys_addr = {5'b0, proc_id, 14'h1, qp.ctx.local_qpn[13:0], 20'h0} + `SQ_RQ_GAP + qp.sq_tail;
+            snd_wqe_phys_addr = `PA_QP(proc_id, qp.ctx.local_qpn) + `SQ_RQ_GAP + qp.sq_tail;
+        end
         
-    //     exp_item = hca_pcie_item::type_id::create("exp_item", this);
-    //     exp_item.rq_addr = snd_wqe_phys_addr;
-    //     exp_item.rq_addr_type = 0;
+        exp_item = hca_pcie_item::type_id::create("exp_item", this);
+        exp_item.rq_addr = snd_wqe_phys_addr;
+        exp_item.rq_addr_type = 0;
 
-    //     // The size of WQE does not exceed the least value of the maximum payload size or read request size of PCIe packet(128B).
-    //     if (source_type == 1) begin
-    //         exp_item.rq_dword_count = db.size0 * 4;
-    //     end
-    //     else if (source_type == 2) begin
-    //         exp_item.rq_dword_count = prev_wqe.next_seg.next_wqe_size * 4;
-    //     end
-    //     else begin
-    //          exp_item.rq_dword_count = `RQ_WQE_BYTE_LEN / 4;
-    //     end
+        // The size of WQE does not exceed the least value of the maximum payload size or read request size of PCIe packet(128B).
+        if (source_type == 1) begin
+            exp_item.rq_dword_count = db.size0 * 4;
+        end
+        else if (source_type == 2) begin
+            exp_item.rq_dword_count = prev_wqe.next_seg.next_wqe_size * 4;
+        end
+        else begin
+             exp_item.rq_dword_count = `RQ_WQE_BYTE_LEN / 4;
+        end
         
-    //     exp_item.rq_req_type = MEM_RD;
-    //     exp_item.rq_poisoned_req = 0;
-    //     exp_item.rq_requester_device = 0; // ?
-    //     exp_item.rq_requester_bus = 0;
-    //     // exp_item.rq_tag = cfg_item.rq_tag;
-    //     exp_item.rq_tag = 0; // how to set tag?
-    //     exp_item.rq_completer_device = 0;
-    //     exp_item.rq_completer_bus = 0;
-    //     exp_item.rq_requester_id_en = 0;
-    //     exp_item.rq_tc = 0;
-    //     exp_item.rq_attr = 0;
-    //     exp_item.rq_force_ecrc = 0;
-    //     port2scb[host_id].write(exp_item);
-    //     `uvm_info("NOTICE", "ref model to scb sent finished!", UVM_LOW);
+        exp_item.rq_req_type = MEM_RD;
+        exp_item.rq_poisoned_req = 0;
+        exp_item.rq_requester_device = 0; // ?
+        exp_item.rq_requester_bus = 0;
+        // exp_item.rq_tag = cfg_item.rq_tag;
+        exp_item.rq_tag = 0; // how to set tag?
+        exp_item.rq_completer_device = 0;
+        exp_item.rq_completer_bus = 0;
+        exp_item.rq_requester_id_en = 0;
+        exp_item.rq_tc = 0;
+        exp_item.rq_attr = 0;
+        exp_item.rq_force_ecrc = 0;
+        port2scb[host_id].write(exp_item);
+        `uvm_info("NOTICE", "ref model to scb sent finished!", UVM_LOW);
 
-    //     if (source_type == 3) begin // RQ
-    //         `uvm_info("NOTICE", $sformatf("wqe_list.size = %0d!", qp.rq.size()), UVM_LOW);
-    //         result_wqe = qp.rq.pop_front();
-    //         desc_byte_len = 0;
-    //         desc_byte_len[qp.ctx.rq_entry_sz_log] = 1'b1;
-    //         qp.rq_tail += desc_byte_len;
-    //         `uvm_info("NOTICE", $sformatf("wqe get from wqe_list! raddr_seg.raddr: %h", result_wqe.raddr_seg.raddr), UVM_LOW);
-    //     end
-    //     else begin // SQ
-    //         `uvm_info("NOTICE", $sformatf("wqe_list.size = %0d!", qp.sq.size()), UVM_LOW);
-    //         result_wqe = qp.sq.pop_front();
-    //         desc_byte_len = 0;
-    //         desc_byte_len[qp.ctx.sq_entry_sz_log] = 1'b1;
-    //         qp.sq_tail += desc_byte_len;
-    //         `uvm_info("NOTICE", $sformatf("wqe get from wqe_list! raddr_seg.raddr: %h", result_wqe.raddr_seg.raddr), UVM_LOW);
-    //     end
-    //     return result_wqe;
-    // endfunction: get_wqe
+        if (source_type == 3) begin // RQ
+            `uvm_info("NOTICE", $sformatf("wqe_list.size = %0d!", qp.rq.size()), UVM_LOW);
+            result_wqe = qp.rq.pop_front();
+            desc_byte_len = 0;
+            desc_byte_len[qp.ctx.rq_entry_sz_log] = 1'b1;
+            qp.rq_tail += desc_byte_len;
+            `uvm_info("NOTICE", $sformatf("wqe get from wqe_list! raddr_seg.raddr: %h", result_wqe.raddr_seg.raddr), UVM_LOW);
+        end
+        else begin // SQ
+            `uvm_info("NOTICE", $sformatf("wqe_list.size = %0d!", qp.sq.size()), UVM_LOW);
+            result_wqe = qp.sq.pop_front();
+            desc_byte_len = 0;
+            desc_byte_len[qp.ctx.sq_entry_sz_log] = 1'b1;
+            qp.sq_tail += desc_byte_len;
+            `uvm_info("NOTICE", $sformatf("wqe get from wqe_list! raddr_seg.raddr: %h", result_wqe.raddr_seg.raddr), UVM_LOW);
+        end
+        return result_wqe;
+    endfunction: get_wqe
     
     task send_cqe(bit [10:0] proc_id, int host_id, hca_queue_pair qp);
         cqe cqe_to_send;

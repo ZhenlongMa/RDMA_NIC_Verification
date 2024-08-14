@@ -169,6 +169,7 @@ class hca_master_driver extends uvm_driver #(hca_pcie_item);
             else begin
                 `uvm_error("ILG_REQ_TYP", "illegal master driver input req item type!");
             end
+            // drive_item_to_dut(req_item);
         end
         else begin
             `uvm_error("ILG_REQ_TYP", "illegal master driver input req item cq_req_type!");

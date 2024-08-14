@@ -309,6 +309,7 @@ class test_direct_param extends uvm_test;
         // initialize HCA
         for (int host_id = 0; host_id < host_num; host_id++) begin
             cfg_agt.init_hca(host_id);
+            // cfg_agt.write_ivt(host_id);
         end
 
         // create EQ, CQ and QP
@@ -327,7 +328,13 @@ class test_direct_param extends uvm_test;
                     for (int i = 0; i < rc_qp_num; i++) begin
                         pd = $urandom();
                         service_type = RC;
+
+                        // create CQ
+                        // cqc_start_addr = cfg_agt.map_icm(a_host_id, `ICM_CQC_TYP, 1); // is this enough?
                         temp_cq = create_cq(proc_id, a_host_id, pd);
+
+                        // create QP, should data MR be created here?
+                        // qpc_start_addr = cfg_agt.map_icm(a_host_id, `ICM_QPC_TYP, 1); // is this enough?
                         qp = create_qp(proc_id, a_host_id, pd, service_type, temp_cq, temp_cq);
                     end
 
@@ -335,7 +342,13 @@ class test_direct_param extends uvm_test;
                     for (int i = 0; i < uc_qp_num; i++) begin
                         pd = $urandom();
                         service_type = UC;
+                        
+                        // create CQ
+                        // cqc_start_addr = cfg_agt.map_icm(a_host_id, `ICM_CQC_TYP, 1); // is this enough?
                         temp_cq = create_cq(proc_id, a_host_id, pd);
+
+                        // create QP, should data MR be created here?
+                        // qpc_start_addr = cfg_agt.map_icm(a_host_id, `ICM_QPC_TYP, 1); // is this enough?
                         qp = create_qp(proc_id, a_host_id, pd, service_type, temp_cq, temp_cq);
                     end
 
@@ -343,7 +356,13 @@ class test_direct_param extends uvm_test;
                     for (int i = 0; i < ud_qp_num; i++) begin
                         pd = $urandom();
                         service_type = UD;
+                        
+                        // create CQ
+                        // cqc_start_addr = cfg_agt.map_icm(a_host_id, `ICM_CQC_TYP, 1); // is this enough?
                         temp_cq = create_cq(proc_id, a_host_id, pd);
+
+                        // create QP, should data MR be created here?
+                        // qpc_start_addr = cfg_agt.map_icm(a_host_id, `ICM_QPC_TYP, 1); // is this enough?
                         qp = create_qp(proc_id, a_host_id, pd, service_type, temp_cq, temp_cq);
                     end
                 end
@@ -359,6 +378,9 @@ class test_direct_param extends uvm_test;
             hca_queue_pair qp_b;
             int flag = 0;
             qp_a = q_list.qp_list[0][i];
+            // if (qp_a.ctx.flags[15:0] != 16'h0000 || qp_a.ctx.flags[15:0] != 16'h0001) begin
+            //     continue;
+            // end
             if (qp_a.ctx.local_qpn % 2 == 0) begin
                 for (int j = 0; j < q_list.qp_list[1].size(); j++) begin
                     if (q_list.qp_list[1][j].ctx.local_qpn == qp_a.ctx.local_qpn + 1) begin
@@ -455,7 +477,6 @@ class test_direct_param extends uvm_test;
                                     if (send_wqe_num != 0) begin
                                         opcode = `VERBS_SEND;
                                         send_db(a_host_id, proc_id, db_id, qp, opcode);
-                                        send_db(b_host_id, proc_id, db_id, qp.remote_qp, 99);
                                     end
                                     else if (write_wqe_num != 0 && qp.ctx.flags[23:16] != `HGHCA_QP_ST_UD) begin
                                         opcode = `VERBS_RDMA_WRITE;
@@ -524,10 +545,13 @@ class test_direct_param extends uvm_test;
         int remote_host_id;
         int host_id;
         bit [10:0] proc_id;
+        // int sq_wqe_num = send_wqe_num + read_wqe_num + write_wqe_num;
 
         host_id = qp.host_id;
         proc_id = qp.proc_id;
         remote_qp = qp.remote_qp;
+        // remote_qpn = remote_qp.ctx.local_qpn;
+
 
         if (host_id == 0) begin
             remote_host_id = 1;
@@ -756,11 +780,14 @@ class test_direct_param extends uvm_test;
     // invoked       : by single_process_cfg
     //------------------------------------------------------------------------------
     function bit connect_qp(int host_id_a, hca_queue_pair qp_a, int host_id_b, hca_queue_pair qp_b);
+        // local.next_send_psn == local.unacked_psn == remote.next_recv_psn
         qp_a.ctx.remote_qpn = qp_b.ctx.local_qpn;
         qp_b.ctx.remote_qpn = qp_a.ctx.local_qpn;
         qp_a.ctx.rnr_nextrecvpsn = qp_b.ctx.next_send_psn;
         qp_b.ctx.rnr_nextrecvpsn = qp_a.ctx.next_send_psn;
+
         qp_a.connect(qp_b);
+
         cfg_agt.modify_qp(host_id_a, qp_a.ctx);
         cfg_agt.modify_qp(host_id_b, qp_b.ctx);
         `uvm_info("CONNECT_QP_INFO", 
@@ -778,35 +805,42 @@ class test_direct_param extends uvm_test;
     task send_db(int host_id, bit [10:0] proc_id, int db_id, hca_queue_pair qp, bit [4:0] op_code);
         hca_pcie_item doorbell_item;
         bit [15:0] first_wqe_byte_offset;
-        if (op_code != 99) begin
-            sq_doorbell send_db;
-            doorbell_item = hca_pcie_item::type_id::create("doorbell_item", this);
-            first_wqe_byte_offset = qp.sq_last_header % qp.sq_byte_size;
-            if (first_wqe_byte_offset[3:0] != 0) begin
-                `uvm_fatal("QP_ERR", $sformatf("first_wqe_byte_offset is not zero! host_id: %h, qpn: %h, sq_tail: %h", 
-                    host_id, qp.ctx.local_qpn, qp.sq_tail));
+        doorbell db;
+        doorbell_item = hca_pcie_item::type_id::create("doorbell_item", this);
+        first_wqe_byte_offset = qp.sq_last_header % qp.sq_byte_size;
+        // What is this?
+        if (first_wqe_byte_offset[3:0] != 0) begin
+            `uvm_fatal("QP_ERR", $sformatf("first_wqe_byte_offset is not zero! host_id: %h, qpn: %h, sq_tail: %h", 
+                host_id, qp.ctx.local_qpn, qp.sq_tail));
+        end
+        db.sq_head = first_wqe_byte_offset[15:4];
+        // first_wqe_byte_offset = db_id * this.wqe_num * `SQ_WQE_BYTE_LEN;
+        // db.sq_head = db_id * this.wqe_num * `SQ_WQE_BYTE_LEN;
+        db.f0 = 0;
+        db.opcode = op_code;
+        db.qp_num = qp.ctx.local_qpn;
+        // db.host_id = host_id;
+        
+        // set size0
+        if (qp.ctx.flags[23:16] == `HGHCA_QP_ST_UD) begin
+            if (op_code == `VERBS_SEND) begin
+                db.size0 = sg_num + 4;
             end
-            send_db.sq_head = first_wqe_byte_offset[15:4];
-            send_db.fence = 0;
-            send_db.qp_num = qp.ctx.local_qpn;
-            send_db.proc_id = proc_id;
-            doorbell_item.item_type = DOORBELL;
-            doorbell_item.send_db = send_db;
+            else begin
+                `uvm_fatal("OP TYPE ERROR", $sformatf("op type error! qpn: %h, host id: %h, op code: %h", qp.ctx.local_qpn, host_id, op_code));
+            end
         end
         else begin
-            rq_doorbell recv_db;
-            doorbell_item = hca_pcie_item::type_id::create("doorbell_item", this);
-            first_wqe_byte_offset = qp.rq_tail % qp.rq_byte_size;
-            if (first_wqe_byte_offset[3:0] != 0) begin
-                `uvm_fatal("QP_ERR", $sformatf("first_wqe_byte_offset is not zero! host_id: %h, qpn: %h, sq_tail: %h", 
-                    host_id, qp.ctx.local_qpn, qp.sq_tail));
+            if (op_code == `VERBS_SEND) begin
+                db.size0 = sg_num + 1;
             end
-            recv_db.rq_head = first_wqe_byte_offset[15:4];
-            recv_db.qp_num = qp.ctx.local_qpn;
-            recv_db.proc_id = proc_id;
-            doorbell_item.item_type = DOORBELL;
-            doorbell_item.recv_db = recv_db;
+            else begin
+                db.size0 = sg_num + 2;
+            end
         end
+        db.proc_id = proc_id;
+        doorbell_item.item_type = DOORBELL;
+        doorbell_item.db = db;
         if (vseq.comm_mbx[host_id].try_put(doorbell_item) == 0) begin
             `uvm_fatal("MAILBOX_PUT_ERROR", "put comm item fail!")
         end
@@ -821,8 +855,8 @@ class test_direct_param extends uvm_test;
         hca_comp_queue send_cq, 
         hca_comp_queue recv_cq
     );
-        // bit [31:0] qp_num = 0;
-        bit [31:0] qp_num = 2;
+        //bit [31:0] qp_num = 0;
+        bit [31:0] qp_num = 14;
         qp_context qpc;
         mpt sq_mpt;
         mpt rq_mpt;
@@ -880,10 +914,10 @@ class test_direct_param extends uvm_test;
         qpc.remote_qpn                  = qp_num;
         qpc.port_pkey                   = 0;
         qpc.rnr_retry                   = 0;
-        qpc.smac                        = {32'b0, 16'h0001};
-        qpc.dmac                        = {32'b0, 16'h0001};
-        qpc.sip                         = $urandom();
-        qpc.dip                         = $urandom();
+        qpc.smac                        = {48'h123456789abc};
+        qpc.dmac                        = {48'hcba987654321};
+        qpc.sip                         = {32'ha0b1c2d3};
+        qpc.dip                         = {32'hd4c5b6a7};
         qpc.pd                          = pd;
         qpc.next_send_psn               = $urandom();
         qpc.cqn_snd                     = send_cq.ctx.cqn;
@@ -903,6 +937,8 @@ class test_direct_param extends uvm_test;
         qp.mem = env.mem[host_id];
         qp.sq_byte_size = `VRF_SQ_BYTE_SIZE;
         qp.rq_byte_size = `VRF_RQ_BYTE_SIZE;
+        // qp.sq_header = 0;
+        // qp.sq_tail = 0;
         q_list.qp_list[host_id].push_back(qp);
         `uvm_info("CREATE_QP_INFO", $sformatf("create QP finished! host_id: %h, QP num: %0d, PD: %h, SQ Key: %h, RQ Key: %h", 
             host_id, qp.ctx.local_qpn, qpc.pd, sq_mpt.key, rq_mpt.key), UVM_LOW);
@@ -913,7 +949,7 @@ class test_direct_param extends uvm_test;
         cq_context cqc;
         mpt cq_mpt;
         addr cq_start_vaddr;
-        bit [31:0] cqn = 0;
+        bit [31:0] cqn = 254;
         hca_comp_queue cq;
         
         // allocate cq number
@@ -985,6 +1021,12 @@ class test_direct_param extends uvm_test;
         end
 
         // set amount of mtt entries and size of memory region
+        // if (size % page_size == 0) begin
+        //     mtt_num = size / page_size;
+        // end
+        // else begin
+        //     mtt_num = size / page_size + 1;
+        // end
         if ((size + start_vaddr[11:0]) % page_size == 0) begin
             mtt_num = (size + start_vaddr[11:0]) / page_size;
             mr_size = mtt_num * `PAGE_SIZE;
@@ -1065,6 +1107,7 @@ class test_direct_param extends uvm_test;
         end
         for (int i = 0; i < beat_num; i++) begin
             for (int j = 0; j < 32; j++) begin
+                // write_data[j] = (i * 32 + j) % 256;
                 write_data[j] = $urandom();
             end
             data_fifo.push(write_data);
