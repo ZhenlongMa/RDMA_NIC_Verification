@@ -781,7 +781,7 @@ class test_direct_param extends uvm_test;
         if (op_code != 99) begin
             sq_doorbell send_db;
             doorbell_item = hca_pcie_item::type_id::create("doorbell_item", this);
-            first_wqe_byte_offset = qp.sq_tail % qp.sq_byte_size;
+            first_wqe_byte_offset = qp.sq_last_header % qp.sq_byte_size;
             if (first_wqe_byte_offset[3:0] != 0) begin
                 `uvm_fatal("QP_ERR", $sformatf("first_wqe_byte_offset is not zero! host_id: %h, qpn: %h, sq_tail: %h", 
                     host_id, qp.ctx.local_qpn, qp.sq_tail));

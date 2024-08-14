@@ -169,7 +169,7 @@ class hca_slave_sequence extends uvm_sequence #(hca_pcie_item);
                     bit [31:0] qpn;
                     qpn = {18'b0, received_item.rq_addr[37:24]};
                     qp = q_list.get_qp(host_id, qpn);
-                    qp.consume_wqe(received_item.rq_addr[23]);
+                    // qp.consume_wqe(received_item.rq_addr[23]);
                     `uvm_info("QP_NOTICE", $sformatf("consume WQE, host_id: %0d, addr: %h", host_id, received_item.rq_addr), UVM_LOW);
                 end
             end

@@ -73,7 +73,7 @@ class hca_pcie_item extends uvm_sequence_item;
     cq_context                                  cq_ctx;
     rand bit          [63:0]                    num_mtt;
 
-    // doorbell                                    db;
+    doorbell                                    db;
     sq_doorbell                                 send_db;
     rq_doorbell                                 recv_db;
     mpt                                         mpt_item;

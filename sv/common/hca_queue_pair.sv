@@ -146,6 +146,7 @@ class hca_queue_pair extends uvm_object;
             `uvm_fatal("QUEUE_ERROR", $sformatf("remote_mpt_que.size != remote_addr_offset_que.size!"));
         end
         
+        qp.sq_last_header = qp.sq_header;
         for (int i = 0; i < wqe_num; i++) begin
             wqe temp_wqe;
             op_type = op_queue.pop_front();
@@ -273,7 +274,6 @@ class hca_queue_pair extends uvm_object;
                 qp.sq_header += desc_byte_len;
             end
         end
-        qp.sq_last_header = qp.sq_header;
         `uvm_info("NOTICE", "put_wqe finished!", UVM_HIGH);
     endtask: put_wqe
 
@@ -560,7 +560,6 @@ class hca_queue_pair extends uvm_object;
                     end
                     sg_id++;
                 end
-                wqe_size = 64 + sg_num * 16;
                 mem.write_block(base_paddr + wqe_offset, data_fifo, 64 + sg_num * 16);
                 if (64 + sg_num * 16 > `SQ_WQE_BYTE_LEN) begin
                     `uvm_fatal("WQE_SZ_ERR", $sformatf("UD SEND WQE size error! sg_num: %0d", sg_num));
