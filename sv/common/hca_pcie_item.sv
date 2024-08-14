@@ -74,8 +74,6 @@ class hca_pcie_item extends uvm_sequence_item;
     rand bit          [63:0]                    num_mtt;
 
     doorbell                                    db;
-    sq_doorbell                                 send_db;
-    rq_doorbell                                 recv_db;
     mpt                                         mpt_item;
     mtt_unit                                    mtt_item;
     icm_base                                    icm_base_struct;
@@ -338,6 +336,14 @@ class hca_pcie_item extends uvm_sequence_item;
             hcr_out_param == 0;
             hcr_op_modifier == 3;
         }
+        // else if (hcr_op == `CMD_UNMAP_ICM)
+        // {
+
+        // }
+        // else if (hcr_op == `CMD_HW2SW_CQ)
+        // {
+
+        // }
         else if (hcr_op == `CMD_SW2HW_CQ)
         {
             hcr_in_param == `INBOX_ADDR;
@@ -346,6 +352,14 @@ class hca_pcie_item extends uvm_sequence_item;
             hcr_op_modifier == 0;
             inbox_size == 64;
         }
+        // else if (hcr_op == `CMD_RESIZE_CQ)
+        // {
+
+        // }
+        // else if (hcr_op == `CMD_HW2SW_MPT)
+        // {
+
+        // }
         else if (hcr_op == `CMD_SW2HW_MPT)
         {
             hcr_in_param == `INBOX_ADDR;
@@ -366,7 +380,9 @@ class hca_pcie_item extends uvm_sequence_item;
         {
             hcr_in_param == 0;
             hcr_out_param == `OUTBOX_ADDR;
+            // hcr_in_modifier == 0; do not set this
             hcr_op_modifier == 0;
+            // inbox_size == 64;
         }
     }
 
@@ -458,6 +474,7 @@ class hca_pcie_item extends uvm_sequence_item;
         if (ig_rq == FALSE) begin
             do_compare &= comparer.compare_field_int("rq_addr", rq_addr, rhs_.rq_addr, 64); //
             do_compare &= comparer.compare_field_int("rq_addr_type", rq_addr_type, rhs_.rq_addr_type, 32);
+            // do_compare &= comparer.compare_field_int("rq_dword_count", rq_addr_type, rhs_.rq_addr_type, 32);
             do_compare &= comparer.compare_field_int("rq_dword_count", rq_dword_count, rhs_.rq_dword_count, 32);
             do_compare &= comparer.compare_field_int("rq_req_type", rq_req_type, rhs_.rq_req_type, 32);
             while (data_payload.size() != 0) begin
@@ -493,8 +510,6 @@ class hca_pcie_item extends uvm_sequence_item;
         this.qp_ctx = item.qp_ctx;
         this.cq_ctx = item.cq_ctx;
         this.db = item.db;
-        this.send_db = item.send_db;
-        this.recv_db = item.recv_db;
         this.mpt_item = item.mpt_item;
         this.mtt_item = item.mtt_item;
         this.icm_base_struct = item.icm_base_struct;
