@@ -110,10 +110,12 @@ class hca_queue_pair extends uvm_object;
     );
         addr desc_byte_len;
         e_op_type op_type;
+        e_op_type next_op_type;
         mpt local_mpt;
         mpt remote_mpt;
         addr local_addr_offset;
         addr remote_addr_offset;
+        // int queue_size = 512 * 1024;
         wqe_data_seg_unit data_seg_unit;
         mpt local_mpt_que_check[$];
         mpt remote_mpt_que_check[$];
@@ -138,6 +140,8 @@ class hca_queue_pair extends uvm_object;
         remote_addr_offset_que_check = remote_addr_offset_que;
         wqe_num = op_que.size();
 
+        next_op_type = op_que.pop_front();
+
         if (local_mpt_que.size() != local_addr_offset_que.size()) begin
             `uvm_fatal("QUEUE_ERROR", $sformatf("local_mpt_que.size != local_addr_offset_que.size!"));
         end
@@ -147,9 +151,17 @@ class hca_queue_pair extends uvm_object;
         end
         
         qp.sq_last_header = qp.sq_header;
+
         for (int i = 0; i < wqe_num; i++) begin
             wqe temp_wqe;
-            op_type = op_queue.pop_front();
+
+            op_type = next_op_type;
+            if (op_que.size() != 0) begin // is not the last WQE
+                next_op_type = op_que.pop_front();
+            end
+            else begin
+                next_op_type = OP_INIT;
+            end
             
             // set WQE length
             desc_byte_len = 0;
@@ -160,16 +172,67 @@ class hca_queue_pair extends uvm_object;
                 desc_byte_len[ctx.sq_entry_sz_log] = 1'b1;
             end
 
-            // set meta seg
-            temp_wqe.meta_seg.wqe_addr = (sq_header % sq_byte_size) >> 4;
-            if (op_type == WRITE || op_type == READ) begin
-                temp_wqe.meta_seg.wqe_size = 3;
+            // set next seg
+            if (i + 1 == wqe_num) begin // is the last wqe
+                if (op_type == RECV) begin
+                    temp_wqe.next_seg.next_wqe = 0;
+                    temp_wqe.next_seg.res_0 = 1;
+                    temp_wqe.next_seg.next_opcode = 0;
+                    temp_wqe.next_seg.next_ee = 0;
+                    temp_wqe.next_seg.next_dbd = 0;
+                    temp_wqe.next_seg.next_fence = 0;
+                    temp_wqe.next_seg.next_wqe_size = 0;
+                    temp_wqe.next_seg.cq = 0;
+                    temp_wqe.next_seg.evt = 0;
+                    temp_wqe.next_seg.solicit = 0;
+                    temp_wqe.next_seg.res_1 = 1;
+                    temp_wqe.next_seg.imm_data = 0;
+                end
+                else begin
+                    temp_wqe.next_seg.next_wqe = 0;
+                    temp_wqe.next_seg.next_opcode = 0;
+                    temp_wqe.next_seg.next_ee = 0;
+                    temp_wqe.next_seg.next_dbd = 0;
+                    temp_wqe.next_seg.next_fence = 0;
+                    temp_wqe.next_seg.next_wqe_size = 0;
+                    temp_wqe.next_seg.cq = 0;
+                    temp_wqe.next_seg.evt = 0;
+                    temp_wqe.next_seg.solicit = 0;
+                    temp_wqe.next_seg.imm_data = 0;
+                end
             end
-            else if (qp.ctx.flags[23:16] == `HGHCA_QP_ST_UD) begin
-                temp_wqe.meta_seg.wqe_size = 5;
-            end
-            else begin
-                temp_wqe.meta_seg.wqe_size = 2;
+            else begin // is not the last wqe
+                case (next_op_type)
+                    WRITE: begin
+                        temp_wqe.next_seg.next_wqe = ((sq_header + desc_byte_len) % sq_byte_size) >> 4;
+                        temp_wqe.next_seg.next_opcode = `VERBS_RDMA_WRITE;
+                        temp_wqe.next_seg.next_wqe_size = sg_num + 2;
+                    end
+                    READ: begin
+                        temp_wqe.next_seg.next_wqe = ((sq_header + desc_byte_len) % sq_byte_size) >> 4;
+                        temp_wqe.next_seg.next_opcode = `VERBS_RDMA_READ;
+                        temp_wqe.next_seg.next_wqe_size = sg_num + 2;
+                    end
+                    SEND: begin
+                        if (qp.ctx.flags[23:16] == `HGHCA_QP_ST_UD) begin
+                            temp_wqe.next_seg.next_wqe = ((sq_header + desc_byte_len) % sq_byte_size) >> 4;
+                            temp_wqe.next_seg.next_opcode = `VERBS_SEND;
+                            temp_wqe.next_seg.next_wqe_size = sg_num + 4;
+                        end
+                        else begin
+                            temp_wqe.next_seg.next_wqe = ((sq_header + desc_byte_len) % sq_byte_size) >> 4;
+                            temp_wqe.next_seg.next_opcode = `VERBS_SEND;
+                            temp_wqe.next_seg.next_wqe_size = sg_num + 1;
+                        end
+                    end
+                    RECV: begin
+                        temp_wqe.next_seg.next_wqe = ((qp.rq_header + desc_byte_len) % rq_byte_size) >> 4;
+                        temp_wqe.next_seg.next_wqe_size = sg_num + 2;
+                    end
+                    default: begin
+                        `uvm_fatal("ILLEGAL_OPCODE", $sformatf("illegal op code in wqe! i: %d, op_que.size: %d.", i, op_que.size()));
+                    end
+                endcase
             end
 
             // set ud seg
@@ -244,10 +307,14 @@ class hca_queue_pair extends uvm_object;
 
             // send source address, destination address and length to scoreboard, no need for SEND
             if (op_type != SEND) begin
+                // mpt local_mpt_que_check_copy[$];
                 mpt remote_mpt_que_check_copy[$];
+                // addr local_addr_offset_que_check_copy[$];
                 addr remote_addr_offset_que_check_copy[$];
                 for (int data_seg_id = 0; data_seg_id < sg_num; data_seg_id++) begin
+                    // local_mpt_que_check_copy.push_back(local_mpt_que_check.pop_front());
                     remote_mpt_que_check_copy.push_back(remote_mpt_que_check.pop_front());
+                    // local_addr_offset_que_check_copy.push_back(local_addr_offset_que_check.pop_front());
                     remote_addr_offset_que_check_copy.push_back(remote_addr_offset_que_check.pop_front());
                 end
                 send_mem_check(
@@ -257,7 +324,9 @@ class hca_queue_pair extends uvm_object;
                     remote_qp.proc_id, 
                     temp_wqe, 
                     op_type, 
+                    // local_mpt_que_check_copy, 
                     remote_mpt_que_check_copy, 
+                    // local_addr_offset_que_check_copy,
                     remote_addr_offset_que_check_copy,
                     check_list
                 );
@@ -273,7 +342,14 @@ class hca_queue_pair extends uvm_object;
             else begin
                 qp.sq_header += desc_byte_len;
             end
+            // if ((qp.sq_header - qp.sq_tail) > 2048) begin
+            //     `uvm_fatal("QP_OVERLAY", "SQ header exceeds tail!");
+            // end
+            // if ((qp.rq_header - qp.rq_tail) > 2048) begin
+            //     `uvm_fatal("QP_OVERLAY", "RQ header exceeds tail!");
+            // end
         end
+        // qp.sq_last_header = qp.sq_header;
         `uvm_info("NOTICE", "put_wqe finished!", UVM_HIGH);
     endtask: put_wqe
 
