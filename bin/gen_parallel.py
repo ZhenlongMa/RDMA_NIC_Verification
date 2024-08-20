@@ -55,6 +55,7 @@ def write_file(case_class):
     file.write("+SG_NUM=" + str(sg_num) + " ")
     file.write("+DATA_CNT=" + str(data_count) + " ")
     file.write("+DATA_UNIT=" + data_unit + " ")
+    file.write("+CASEID=" + str(flag) + " ")
     file.write("+vcs+lic+wait\n")
 
 
