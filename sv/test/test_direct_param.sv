@@ -307,7 +307,8 @@ class test_direct_param extends uvm_test;
         int proc_id = 1;
 
         // initialize HCA
-        for (int host_id = 0; host_id < host_num; host_id++) begin
+        for (int host_id = 0; host_id < host_num; host_id++) 
+            cfg_agt.query_adapter(host_id);
             cfg_agt.init_hca(host_id);
             // cfg_agt.write_ivt(host_id);
         end
@@ -410,8 +411,8 @@ class test_direct_param extends uvm_test;
                 end
             end
             `ifdef QUERY_QP_TEST
-                cfg_agt.query_qp(host_id_a, qp_a.ctx.local_qpn);
-                cfg_agt.query_qp(host_id_b, qp_b.ctx.local_qpn);
+                cfg_agt.query_qp(0, qp_a.ctx.local_qpn);
+                cfg_agt.query_qp(1, qp_b.ctx.local_qpn);
             `endif
         end
 
