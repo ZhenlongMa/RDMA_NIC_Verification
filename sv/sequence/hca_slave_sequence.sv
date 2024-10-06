@@ -169,8 +169,8 @@ class hca_slave_sequence extends uvm_sequence #(hca_pcie_item);
                     bit [31:0] qpn;
                     qpn = {18'b0, received_item.rq_addr[37:24]};
                     qp = q_list.get_qp(host_id, qpn);
-                    // qp.consume_wqe(received_item.rq_addr[23]);
-                    `uvm_info("QP_NOTICE", $sformatf("consume WQE, host_id: %0d, addr: %h", host_id, received_item.rq_addr), UVM_LOW);
+                    //qp.consume_wqe(received_item.rq_addr[23]);
+                    //`uvm_info("QP_NOTICE", $sformatf("consume WQE, host_id: %0d, addr: %h", host_id, received_item.rq_addr), UVM_LOW);
                 end
             end
             else if (received_item.rq_req_type == MEM_WR) begin
@@ -182,10 +182,7 @@ class hca_slave_sequence extends uvm_sequence #(hca_pcie_item);
                 while (received_item.data_payload.size() != 0) begin
                     temp_data = received_item.data_payload.pop_front();
                     temp_fifo.push(temp_data);
-                    if (received_item.rq_addr == `OUTBOX_ADDR) begin
-                        // `uvm_info("NOTICE", $sformatf("write data: %h, addr: %h", temp_data, received_item.rq_addr), UVM_LOW);
-                        `uvm_info("NOTICE", $sformatf("outbox: %h, addr: %h", temp_data, received_item.rq_addr), UVM_LOW);
-                    end
+                    `uvm_info("NOTICE", $sformatf("write data: %h, addr: %h", temp_data, received_item.rq_addr), UVM_LOW);
                 end
 
                 // consider last_be and first_be

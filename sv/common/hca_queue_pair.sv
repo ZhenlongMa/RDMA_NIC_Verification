@@ -500,7 +500,7 @@ class hca_queue_pair extends uvm_object;
             data_fifo.clean();
             raw_data[127:0] = {
                 temp_wqe.next_seg.imm_data,
-                {8'b0}, op, desc_size, 2'b0, temp_wqe.next_seg.cq, temp_wqe.next_seg.evt, temp_wqe.next_seg.solicit, 1'b0,
+                {8'b0}, op, desc_size >> 4, 2'b0, temp_wqe.next_seg.cq, temp_wqe.next_seg.evt, temp_wqe.next_seg.solicit, 1'b0,
                 temp_wqe.next_seg.next_ee, temp_wqe.next_seg.next_dbd, temp_wqe.next_seg.next_fence, temp_wqe.next_seg.next_wqe_size,
                 temp_wqe.next_seg.next_wqe, 1'b0, temp_wqe.next_seg.next_opcode
             };
@@ -549,7 +549,7 @@ class hca_queue_pair extends uvm_object;
                 data_fifo.clean();
                 raw_data[127:0] = {
                     temp_wqe.next_seg.imm_data,
-                    {8'b0}, op, desc_size, 2'b0, temp_wqe.next_seg.cq, temp_wqe.next_seg.evt, temp_wqe.next_seg.solicit, temp_wqe.next_seg.res_1,
+                    {8'b0}, op, desc_size >> 4, 2'b0, temp_wqe.next_seg.cq, temp_wqe.next_seg.evt, temp_wqe.next_seg.solicit, temp_wqe.next_seg.res_1,
                     temp_wqe.next_seg.next_ee, temp_wqe.next_seg.next_dbd, temp_wqe.next_seg.next_fence, temp_wqe.next_seg.next_wqe_size,
                     temp_wqe.next_seg.next_wqe, temp_wqe.next_seg.res_0, temp_wqe.next_seg.next_opcode
                 };
@@ -591,7 +591,7 @@ class hca_queue_pair extends uvm_object;
                 data_fifo.clean();
                 raw_data[127:0] = {
                     temp_wqe.next_seg.imm_data,
-                    {8'b0}, op, desc_size, 2'b0, temp_wqe.next_seg.cq, temp_wqe.next_seg.evt, temp_wqe.next_seg.solicit, temp_wqe.next_seg.res_1,
+                    {8'b0}, op, desc_size >> 16, 2'b0, temp_wqe.next_seg.cq, temp_wqe.next_seg.evt, temp_wqe.next_seg.solicit, temp_wqe.next_seg.res_1,
                     temp_wqe.next_seg.next_ee, temp_wqe.next_seg.next_dbd, temp_wqe.next_seg.next_fence, temp_wqe.next_seg.next_wqe_size,
                     temp_wqe.next_seg.next_wqe, temp_wqe.next_seg.res_0, temp_wqe.next_seg.next_opcode
                 };
@@ -651,7 +651,7 @@ class hca_queue_pair extends uvm_object;
             data_fifo.clean();
             raw_data[127:0] = {
                 temp_wqe.next_seg.imm_data,
-                {16'b0}, desc_size, 2'b0, temp_wqe.next_seg.cq, temp_wqe.next_seg.evt, temp_wqe.next_seg.solicit, temp_wqe.next_seg.res_1,
+                {16'b0}, desc_size >> 4, 2'b0, temp_wqe.next_seg.cq, temp_wqe.next_seg.evt, temp_wqe.next_seg.solicit, temp_wqe.next_seg.res_1,
                 temp_wqe.next_seg.next_ee, temp_wqe.next_seg.next_dbd, temp_wqe.next_seg.next_fence, temp_wqe.next_seg.next_wqe_size,
                 temp_wqe.next_seg.next_wqe, temp_wqe.next_seg.res_0, temp_wqe.next_seg.next_opcode
             };

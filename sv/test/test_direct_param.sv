@@ -307,7 +307,7 @@ class test_direct_param extends uvm_test;
         int proc_id = 1;
 
         // initialize HCA
-        for (int host_id = 0; host_id < host_num; host_id++) 
+        for (int host_id = 0; host_id < host_num; host_id++) begin
             cfg_agt.query_adapter(host_id);
             cfg_agt.init_hca(host_id);
             // cfg_agt.write_ivt(host_id);

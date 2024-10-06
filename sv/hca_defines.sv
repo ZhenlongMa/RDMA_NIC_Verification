@@ -1,3 +1,4 @@
+`define QUERY_QP_TEST
 ////////////////////////////////////////////////////////////
 // width, length and size
 ////////////////////////////////////////////////////////////
@@ -146,7 +147,7 @@
 `define READY_GAP                       64
 `define PCIE_CLK_PERIOD                 10  // nanosecond
 `define RDMA_CLK_PERIOD                 10  // nanosecond
-`define BREAKTIME                       1500
+`define BREAKTIME                       5000
 
 ////////////////////////////////////////////////////////////
 // code
